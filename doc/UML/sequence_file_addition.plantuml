@@ -1,0 +1,42 @@
+@startuml sequence_file_addition
+actor user
+participant node_0 <<001>>
+participant node_w <<011>>
+participant node_x <<100>>
+participant node_y <<111>>
+participant node_z <<101>>
+note over node_0
+    table : [
+        node_0 : 001, 
+        node_w : 011, 
+        node_x : 100,
+        ]
+end note
+
+user -> node_0 : Put file "banana"
+activate node_0
+node_0 -> node_0 : Compute hash of "banana" which is 101
+node_0 -> node_0 : Search on its routing table the closest node, which is node_x
+
+note over node_x
+table : [
+    node_x : 100,
+    node_0 : 001, 
+    node_y : 111, 
+    node_z : 101
+    ]
+end note
+node_0 -> node_x : Ask if it knows closer to 101
+    activate node_x
+    node_x -> node_x : Search on its routing table the closest node, which is node_z
+    return node_z,101
+
+node_0 -> node_z : Put file "banana"
+    activate node_z
+    node_z -> node_z : Compute hash of "banana" which is 101
+    node_z -> node_z : Store banana under the id 101
+    return id=101
+
+return id=101
+
+@enduml
