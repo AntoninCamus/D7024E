@@ -1,0 +1,43 @@
+@startuml class_general_organisation
+
+class kademlia_cli
+
+package server {
+    class rest_api
+    class network_grpc_service
+    class network_grpc_client
+    class kademlia_grpc_service
+    class kademlia_grpc_client
+
+    rest_api --> network_grpc_client 
+    rest_api --> kademlia_grpc_client
+    network_grpc_client --> network_grpc_service
+    kademlia_grpc_client --> kademlia_grpc_service
+    
+}
+
+rest_api <. kademlia_cli
+
+package model{
+    class bucket 
+    class contact
+    class kademlia_id{
+        byte[ID_SIZE]
+    }
+
+    class routingtable
+    class ip_address{
+        byte[4]
+    }
+
+    routingtable o- bucket
+    routingtable o- contact
+    bucket o-- contact
+    contact o-kademlia_id
+    contact o-left- ip_address
+}
+
+network_grpc_service --> routingtable
+kademlia_grpc_service --> routingtable
+
+@enduml

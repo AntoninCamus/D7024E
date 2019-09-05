@@ -1,0 +1,68 @@
+@startuml sequence_node_creation
+
+actor user 
+create node_1
+user -> node_1 : Start a node
+node_1 -> node_1 : Generate an empty routing table
+note over node_1
+    table : [node_1]
+end note
+
+
+create node_2
+user -> node_2 : Start a node
+
+user -> node_2 : Ask it to join the network of node_1
+activate node_2
+
+node_2 -> node_1 : Ask for its routing table
+activate node_1
+return << table : [node_1] >>
+
+node_2 -> node_1 : As the table contains only node_1, ask to be registered by it
+activate node_1
+return << table : [node_1, node_2] >>
+
+node_2 -> node_2 : Generate a routing table from the received one
+note over node_2
+    table : [node_1, node_2]
+end note
+deactivate node_2
+
+group General Case
+create node_i
+user -> node_i : Start a node
+user -> node_i : Ask it to join the network of node_1
+activate node_i
+
+node_i -> node_1 : Ask for its routing table
+activate node_1
+return << table : [node_1, node_2] >>
+
+node_i -> node_i : Select a random member of the table
+note left #aqua
+    The reason why we choose a random node to be registred by
+    is to spread the knowledge of the nodes, and to avoid
+    to centralize the knowledge on the entry node.
+    We could improve this by doing this select and ask several
+    times recursively, to avoid contacting only nodes known by
+    the first node, but for a prototype this is good enough.
+end note
+node_i -> node_2 : Ask to be registered by the random member
+activate node_2
+return << table : [node_1, node_2, node_i] >>
+
+node_i -> node_i : Select a random member of the first table
+node_i -> node_1 : Ask for its routing table
+activate node_1
+return << table : [node_1, node_2] >>
+
+node_i -> node_i : Generate a routing table from the received one
+deactivate node_i
+note over node_i
+    table : [node_i, node_1, node_2]
+end note
+
+end
+
+@enduml
