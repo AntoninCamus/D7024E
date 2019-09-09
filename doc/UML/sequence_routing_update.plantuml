@@ -1,0 +1,14 @@
+@startuml sequence_routing_update
+
+[-> node_x : << network_request  from node_y >>
+alt the table is full
+    node_x ->] : Ping every node in the bucket to check aliveness of them
+    alt some node is dead
+        node_x -> node_x : Remove dead nodes in the bucket
+    else
+        node_x -> node_x : Remove the oldest node in the bucket
+    end
+end
+
+node_x -> node_x : Add node_y to the bucket
+@enduml

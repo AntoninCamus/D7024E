@@ -36,8 +36,8 @@ user -> node_i : Ask it to join the network of node_1
 activate node_i
 
 node_i -> node_1 : Ask for its routing table
-activate node_1
-return << table : [node_1, node_2] >>
+    activate node_1
+    return << table : [node_1, node_2] >>
 
 node_i -> node_i : Select a random member of the table
 note left #aqua
@@ -49,13 +49,13 @@ note left #aqua
     the first node, but for a prototype this is good enough.
 end note
 node_i -> node_2 : Ask to be registered by the random member
-activate node_2
-return << table : [node_1, node_2, node_i] >>
+    activate node_2
+    return << table : [node_1, node_2, node_i] >>
 
 node_i -> node_i : Select a random member of the first table
-node_i -> node_1 : Ask for its routing table
-activate node_1
-return << table : [node_1, node_2] >>
+    node_i -> node_1 : Ask for its routing table
+    activate node_1
+    return << table : [node_1, node_2] >>
 
 node_i -> node_i : Generate a routing table from the received one
 deactivate node_i

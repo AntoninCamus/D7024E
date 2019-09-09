@@ -1,43 +1,54 @@
 @startuml class_general_organisation
+allowmixing
+package kademlia_d7024e {
+    class kademlia_cli
 
-class kademlia_cli
+    class kademlia_daemon
 
-package server {
-    class rest_api
-    class network_grpc_service
-    class network_grpc_client
-    class kademlia_grpc_service
-    class kademlia_grpc_client
+    package networking {
+        class user_restapi_service
+        class internal_grpcapi_service
+        class internal_grpcapi_client
 
-    rest_api --> network_grpc_client 
-    rest_api --> kademlia_grpc_client
-    network_grpc_client --> network_grpc_service
-    kademlia_grpc_client --> kademlia_grpc_service
-    
-}
-
-rest_api <. kademlia_cli
-
-package model{
-    class bucket 
-    class contact
-    class kademlia_id{
-        byte[ID_SIZE]
+        internal_grpcapi_client ..> internal_grpcapi_service : to other nodes    
     }
 
-    class routingtable
-    class ip_address{
-        byte[4]
+    package model{
+        class bucket {
+            AddContact(contact Contact) : void
+            GetContactAndCalcDistance(target *KademliaID) : Contact[]
+            Len() : int
+        }
+        class contact {
+            CalsDistance(target KademliaID) : void
+            Less(otherContact Contact) : bool
+            String() : string
+        }
+        class kademlia_id{
+            byte[ID_SIZE]
+        }
+
+        class routingtable
+
+        class ip_address{
+            byte[4]
+        }
+
+        routingtable o- bucket : buckets
+        routingtable o- contact : me
+        bucket o-- contact : contacts
+        contact o-kademlia_id : id
+        contact o-left- ip_address : address
     }
 
-    routingtable o- bucket
-    routingtable o- contact
-    bucket o-- contact
-    contact o-kademlia_id
-    contact o-left- ip_address
-}
+    actor user 
+    user -> kademlia_cli : uses
+    kademlia_cli ..> user_restapi_service
+    kademlia_daemon --> user_restapi_service
+    kademlia_daemon --> internal_grpcapi_client
+    kademlia_daemon --> internal_grpcapi_service
+    kademlia_daemon o-- routingtable
 
-network_grpc_service --> routingtable
-kademlia_grpc_service --> routingtable
+}
 
 @enduml
