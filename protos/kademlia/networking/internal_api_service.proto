@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package networking;
+
+service InternalApiService {
+    rpc PingCall(PingRequest) returns (PingAnswer);
+}
+
+message PingRequest {
+    bytes sender_kademlia_id = 1;  
+}
+
+message PingAnswer {
+    bytes receiver_kademlia_id = 1;
+}
