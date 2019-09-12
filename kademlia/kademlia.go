@@ -3,25 +3,32 @@ package kademlia
 import "github.com/LHJ/D7024E/kademlia/model"
 
 type Kademlia struct {
-	Me *model.Contact
+	table *RoutingTable
+	KademliaID
+	files []Data
 }
 
-func (kademlia *Kademlia) RegisterContact(c *model.Contact) {
-	// TODO : Add the new contact to the bucket with the algorithm of the paper
-	// WARNING : do it ASYNCHRONOUSLY (return instantly) and inside the worker
+
+type Data struct{
+	hash string //how to limit length of strings :thinking:
+	value string
+	lastUpdatedOrAccessed int //some point in time that it was stored/retrieved, from which whether it should be automatically pruned is calculated
+	keepAlive bool //default value true
 }
 
-func (kademlia *Kademlia) LookupContact(targetID *model.KademliaID, nbNeighbors int) (neighbors []model.Contact, err error) {
+func (kademlia *Kademlia) SaveData (data Data){
+	kademlia.files = append(kademlia.files, data)
+}
+
+func (kademlia *Kademlia) LookupContact(target *model.Contact) {
+  kademlia.table.FindClosestContacts(target.ID, 12)
+}
+
+func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO
-	return nil,nil
 }
 
-func (kademlia *Kademlia) LookupData(fileID *model.KademliaID) (data []byte, err error) {
-	// TODO
-	return nil,nil
-}
+func (kademlia *Kademlia) Store(data []byte) {
+	// Lookup node then AddData
 
-func (kademlia *Kademlia) Store(data []byte) (hash KademliaID, err error) {
-	// TODO
-	return "", nil
 }
