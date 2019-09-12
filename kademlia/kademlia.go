@@ -1,9 +1,11 @@
 package kademlia
 
+import "github.com/LHJ/D7024E/kademlia/model"
+
 type Kademlia struct {
 }
 
-func (kademlia *Kademlia) LookupContact(target *Contact) {
+func (kademlia *Kademlia) LookupContact(target *model.Contact) {
 	// TODO
 }
 
