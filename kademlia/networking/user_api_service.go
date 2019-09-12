@@ -7,7 +7,7 @@ import (
 )
 
 type messageAnswer struct {
-	Message string `json:Message`
+	Message string `json:"message"`
 }
 
 // StartRestServer start the REST User API
