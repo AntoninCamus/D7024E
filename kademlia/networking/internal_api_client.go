@@ -1,16 +1,53 @@
 package networking
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
 	"github.com/LHJ/D7024E/kademlia/model"
+	"google.golang.org/grpc"
 )
 
-// SendPingMessage ping the provided contact and return if it is present or not
-func SendPingMessage(target *model.Contact) bool {
-	// TODO
-	return true
+func connect(address string) (InternalApiServiceClient, *grpc.ClientConn, error) {
+	conn, err := grpc.Dial(
+		fmt.Sprintf("%s:%d", address, GrpcPort),
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+		grpc.WithTimeout(1*time.Second),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client := NewInternalApiServiceClient(conn)
+	return client, conn, nil
 }
 
-// SendFindContactMessage ask to the provided node for the nbNeighbors closest neighbors of the nodeID provided
+// SendPingMessage ping the provided contact and return if it is present or not.
+func SendPingMessage(target *model.Contact) bool {
+	// Open gRPC connection
+	client, conn, err := connect(target.Address)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+	defer conn.Close()
+
+	ans, err := client.PingCall(
+		context.Background(),
+		&PingRequest{SenderKademliaId: model.NewRandomKademliaID()[:]},
+	)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
+
+	return len(ans.GetReceiverKademliaId()) == model.IDLength
+}
+
+// SendFindContactMessage ask to the provided node for the nbNeighbors closest neighbors of the nodeID provided, and returns them.
 func SendFindContactMessage(target *model.Contact, nodeID *model.KademliaID, nbNeighbors int) []*model.Contact {
 	// TODO
 	return make([]*model.Contact, 0)

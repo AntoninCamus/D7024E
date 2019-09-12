@@ -1,9 +1,9 @@
 #!/bin/sh
 
-echo "Building protobufs files ..."
+echo "Compiling protobufs files ..."
 protoc  --proto_path protos/ \
         --go_out=plugins=grpc:. \
         protos/kademlia/networking/internal_api_service.proto
 
-echo "Building go application ..."
-go build main.go
+echo "Compiling golang application ..."
+go build -o main.run main.go
