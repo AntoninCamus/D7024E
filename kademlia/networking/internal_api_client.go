@@ -48,19 +48,19 @@ func SendPingMessage(target *model.Contact) bool {
 }
 
 // SendFindContactMessage ask to the provided node for the nbNeighbors closest neighbors of the nodeID provided, and returns them.
-func SendFindContactMessage(target *model.Contact, nodeID *model.KademliaID, nbNeighbors int) []*model.Contact {
+func SendFindContactMessage(target *model.Contact, me *model.Contact, nodeID *model.KademliaID, nbNeighbors int) []*model.Contact {
 	// TODO
 	return make([]*model.Contact, 0)
 }
 
 // SendFindDataMessage ask to the provided node for the file identified by the provided fileID, and returns it.
-func SendFindDataMessage(target *model.Contact, fileID *model.KademliaID) []byte {
+func SendFindDataMessage(target *model.Contact, me *model.Contact, fileID *model.KademliaID) []byte {
 	// TODO
 	return make([]byte, 0)
 }
 
 // SendStoreMessage ask to the provided node to store the file, and returns the corresponding ID.
-func SendStoreMessage(target *model.Contact, data []byte) *model.KademliaID {
+func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) *model.KademliaID {
 	// TODO
 	return model.NewRandomKademliaID()
 }
