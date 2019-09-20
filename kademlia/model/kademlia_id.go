@@ -2,6 +2,8 @@ package model
 
 import (
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"math/rand"
 )
 
@@ -53,7 +55,7 @@ func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
 	return true
 }
 
-// CalcDistance returns a new instance of a KademliaID that is built 
+// CalcDistance returns a new instance of a KademliaID that is built
 // through a bitwise XOR operation betweeen kademliaID and target
 func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 	result := KademliaID{}
@@ -66,4 +68,14 @@ func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 // String returns a simple string representation of a KademliaID
 func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
+}
+
+func KademliaIDFromBytes(unparsedID []byte) (id *KademliaID, err error) {
+	if len(unparsedID) != IDLength {
+		return nil, errors.New(fmt.Sprintf("Invalid sized ID : '%s' of size %d>%d", unparsedID, len(unparsedID), IDLength))
+	} else {
+		var res = &KademliaID{}
+		copy(res[:], unparsedID[:])
+		return res, nil
+	}
 }

@@ -4,6 +4,7 @@ package networking;
 
 service InternalApiService {
     rpc PingCall(PingRequest) returns (PingAnswer);
+    rpc FindContactCall(FindContactRequest) returns (FindContactAnswer);
 }
 
 message PingRequest {
@@ -12,4 +13,19 @@ message PingRequest {
 
 message PingAnswer {
     bytes receiver_kademlia_id = 1;
+}
+
+message FindContactRequest{
+    Contact me = 1;
+    bytes searched_kademlia_id = 2;
+    int32 nb_neighbors = 3;
+}
+
+message FindContactAnswer {
+    repeated Contact contacts = 1;
+}
+
+message Contact {
+    bytes ID = 1;
+	string Address = 2;
 }

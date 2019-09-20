@@ -3,11 +3,10 @@ package networking
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/LHJ/D7024E/kademlia/model"
 	"google.golang.org/grpc"
+	"log"
+	"time"
 )
 
 func connect(address string) (InternalApiServiceClient, *grpc.ClientConn, error) {
@@ -15,7 +14,7 @@ func connect(address string) (InternalApiServiceClient, *grpc.ClientConn, error)
 		fmt.Sprintf("%s:%d", address, GrpcPort),
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
-		grpc.WithTimeout(1*time.Second),
+		grpc.WithTimeout(3 * time.Second),
 	)
 	if err != nil {
 		return nil, nil, err
@@ -33,7 +32,11 @@ func SendPingMessage(target *model.Contact) bool {
 		log.Print(err)
 		return false
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
 
 	ans, err := client.PingCall(
 		context.Background(),
@@ -47,10 +50,49 @@ func SendPingMessage(target *model.Contact) bool {
 	return len(ans.GetReceiverKademliaId()) == model.IDLength
 }
 
-// SendFindContactMessage ask to the provided node for the nbNeighbors closest neighbors of the nodeID provided, and returns them.
-func SendFindContactMessage(target *model.Contact, me *model.Contact, nodeID *model.KademliaID, nbNeighbors int) []*model.Contact {
-	// TODO
-	return make([]*model.Contact, 0)
+// SendFindContactMessage ask to the provided node for the nbNeighbors closest neighbors of the searchedID provided, and returns them.
+func SendFindContactMessage(target *model.Contact, me *model.Contact, searchedID *model.KademliaID, nbNeighbors int) (contacts []*model.Contact, err error) {
+	// Open gRPC connection
+	client, conn, err := connect(target.Address)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
+
+	ans, err := client.FindContactCall(
+		context.Background(),
+		&FindContactRequest{
+			Me: &Contact{
+				ID:      me.ID[:],
+				Address: me.Address,
+			},
+			SearchedKademliaId: searchedID[:],
+			NbNeighbors:        int32(nbNeighbors),
+		},
+	)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+
+	var modelContacts []*model.Contact
+	for _, c := range ans.Contacts[:] {
+		tmpID, err := model.KademliaIDFromBytes(c.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		modelContacts = append(modelContacts, &model.Contact{
+			ID:      tmpID,
+			Address: c.Address,
+		})
+	}
+
+	return modelContacts, nil
 }
 
 // SendFindDataMessage ask to the provided node for the file identified by the provided fileID, and returns it.

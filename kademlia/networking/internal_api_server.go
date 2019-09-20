@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/LHJ/D7024E/kademlia"
 	"log"
 	"net"
 
@@ -16,7 +17,9 @@ import (
 const GrpcPort int = 9090
 
 // InternalAPIServer is the grpc server that serves the internal API
-type InternalAPIServer struct{}
+type InternalAPIServer struct {
+	singleton *kademlia.Kademlia
+}
 
 // PingCall anwser to PingRequest by checking if they sent a valid KademliaID
 func (s *InternalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*PingAnswer, error) {
@@ -28,6 +31,42 @@ func (s *InternalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*Pin
 	}
 
 	return &PingAnswer{ReceiverKademliaId: model.NewRandomKademliaID()[:]}, nil //FIXME return node's Kademlia ID instead
+}
+
+//FindContactCall answer
+func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContactRequest) (*FindContactAnswer, error) {
+	srcContact := &model.Contact{}
+	searchedID := &model.KademliaID{}
+
+	tmpID, err := model.KademliaIDFromBytes(in.Me.ID)
+	if err != nil {
+		return nil, err
+	} else {
+		srcContact.ID = tmpID
+		srcContact.Address = in.Me.Address
+	}
+
+	searchedID, err = model.KademliaIDFromBytes(in.SearchedKademliaId)
+	if err != nil {
+		return nil, err
+	}
+
+	s.singleton.RegisterContact(srcContact)
+	modelContact, err := s.singleton.LookupContact(searchedID, int(in.NbNeighbors))
+	if err != nil {
+		return nil, err
+	}
+
+	var newContacts []*Contact
+	for _, c := range modelContact[:] {
+		newContacts = append(newContacts, &Contact{
+			ID:      c.ID[:],
+			Address: c.Address,
+		})
+	}
+	return &FindContactAnswer{
+		Contacts: newContacts,
+	}, nil
 }
 
 // StartGrpcServer start the gRPC internal API
@@ -44,7 +83,7 @@ func StartGrpcServer() *grpc.Server {
 	log.Printf("GrpcServer ready ...")
 	serving := func() {
 		//Blocking call
-		grpcServer.Serve(lis)
+		err = grpcServer.Serve(lis)
 
 		if err != nil {
 			log.Fatal(err)
