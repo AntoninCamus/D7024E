@@ -1,31 +1,29 @@
 package main
 
 import (
-	"google.golang.org/grpc"
-	"net/http"
+	"log"
 	"os"
 	"os/signal"
 
 	"github.com/LHJ/D7024E/kademlia/networking"
 )
 
-type ManagementSingleton struct {
-	sigChan chan os.Signal
-	restSrv http.Server
-	grpcSrv grpc.Server
-}
-
 func main() {
-	mgmtSing := ManagementSingleton{
-		sigChan: make(chan os.Signal, 1),
-	}
+	// Channel creation
+	sigChan := 	make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, os.Kill)
 
-	// TODO Servers calls should be taking as argument the signal chan and return server (or a specific structure)
-	networking.StartRestServer()
-	//networking.StartGrpcServer()
 
-	// Setup signal handling
-	signal.Notify(mgmtSing.sigChan, os.Interrupt)
-	<-mgmtSing.sigChan // Wait for exit signal
-	// Clean
+	// Start servers
+	restSrv := networking.StartRestServer(sigChan)
+	grpcSrv := networking.StartGrpcServer()
+
+	// Wait for signal
+	<-sigChan
+
+	// Clean leftovers
+	log.Print("Exiting servers ...")
+	grpcSrv.GracefulStop()
+	restSrv.Close()
 }
