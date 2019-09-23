@@ -1,9 +1,11 @@
 package networking
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/LHJ/D7024E/kademlia"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -39,17 +41,20 @@ func StartRestServer(s *kademlia.Kademlia) (*restService) {
 	return &service
 }
 
-
 func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
-	found := ""
+	var found interface{} // Generic
 
+	// Store
 	if r.Method == "POST" {
-		found = "insert id of file here"
-	}
-	if r.Method == "GET" {
-		found = "insert content of file here"
+		found = store(w, r)
 	}
 
+	// Find
+	if r.Method == "GET" {
+		found = find(w, r)
+	}
+
+	// Write response
 	js, err := json.Marshal(found)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -58,9 +63,34 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
+}
 
+func find(w http.ResponseWriter, r *http.Request) base64.Encoding {
+	id := r.URL.Path[1:]
+	print(id)
+
+	var file base64.Encoding // Insert file content here. Call restService.singleton
+	return file
 
 }
+
+func store(w http.ResponseWriter, r *http.Request) int {
+	var results []string
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body",
+			http.StatusInternalServerError)
+	}
+	results = append(results, string(body))
+
+	print(string(body))
+
+
+	var id int // insert id of file here
+	return id
+}
+
 
 func (s *restService) exitServer(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(
