@@ -70,7 +70,7 @@ func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
 }
 
-func fromString(data string) *KademliaID {
+func FromString(data string) *KademliaID {
 	decoded, _ := hex.DecodeString(data)
 
 	newKademliaID := KademliaID{}

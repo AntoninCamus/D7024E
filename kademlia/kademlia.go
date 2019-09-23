@@ -2,6 +2,8 @@ package kademlia
 
 import (
 	"crypto/sha1"
+	"encoding/hex"
+	"errors"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"github.com/LHJ/D7024E/kademlia/networking"
 )
@@ -43,19 +45,30 @@ func (kademlia *Kademlia) LookupContact(target *model.KademliaID) []model.Contac
 	kademlia.state.table.FindClosestContacts(target, 12)
 }
 
-func (kademlia *Kademlia) LookupData(hash string) { //find and get data
+func (kademlia *Kademlia) LookupData(hash string) {
+	//check if present locally
+	newHash := model.FromString(hash)
+	closestContacts := kademlia.LookupContact(newHash)
+	//for i := range closestContacts {go func() {}()	} //rpc calls
+
+	for range closestContacts{ //deal with the rpc
+
+	}
 
 }
 
-func (kademlia *Kademlia) Store(data []byte) {
+func (kademlia *Kademlia) Store(data []byte) (returnHash string, err error) {
 	// Lookup node then AddData
 	hash := model.NewKademliaID(data)
 
-	targetAddr := model.NewContact(hash, "notanip") //why in the world would you need a contact
+	//targetAddr := model.NewContact(hash, "notanip") //why in the world would you need a contact
 	contacts := kademlia.LookupContact(hash)
 
 	for i := 0; i< len(contacts); i++ {
-		networking.SendStoreMessage(&(contacts[i]), data, *hash) //this is potentially not a good idea
+		networking.SendStoreMessage(&(contacts[i]), data)//, *hash) //this is potentially not a good idea
 	}
 
+
+	return hash.String(), errors.New("damn")
+	//maybe the republish should be here?
 }
