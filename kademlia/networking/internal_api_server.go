@@ -18,7 +18,7 @@ const GrpcPort int = 9090
 
 // InternalAPIServer is the grpc server that serves the internal API
 type InternalAPIServer struct {
-	singleton *kademlia.Kademlia
+	kademlia *kademlia.Kademlia
 }
 
 // PingCall anwser to PingRequest by checking if they sent a valid KademliaID
@@ -30,7 +30,7 @@ func (s *InternalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*Pin
 		return nil, errors.New("Invalid request content")
 	}
 
-	return &PingAnswer{ReceiverKademliaId: model.NewRandomKademliaID()[:]}, nil //FIXME return node's Kademlia ID instead
+	return &PingAnswer{ReceiverKademliaId: s.kademlia.Me.ID[:]}, nil
 }
 
 //FindContactCall answer
@@ -45,14 +45,13 @@ func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 		srcContact.ID = tmpID
 		srcContact.Address = in.Me.Address
 	}
+	s.kademlia.RegisterContact(srcContact)
 
-	searchedID, err = model.KademliaIDFromBytes(in.SearchedKademliaId)
+	searchedID, err = model.KademliaIDFromBytes(in.SearchedContactId)
 	if err != nil {
 		return nil, err
 	}
-
-	s.singleton.RegisterContact(srcContact)
-	modelContact, err := s.singleton.LookupContact(searchedID, int(in.NbNeighbors))
+	modelContact, err := s.kademlia.LookupContact(searchedID, int(in.NbNeighbors))
 	if err != nil {
 		return nil, err
 	}
