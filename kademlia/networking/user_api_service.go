@@ -2,10 +2,10 @@ package networking
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/LHJ/D7024E/kademlia"
 	"log"
 	"net/http"
-	"fmt"
 )
 
 type messageAnswer struct {
@@ -25,8 +25,7 @@ func StartRestServer(s *kademlia.Kademlia) (*restService) {
 		server:    &http.Server{Addr: ":8080", Handler: nil},
 		singleton: s,
 	}
-	http.HandleFunc("/kademlia/store", service.store)
-	http.HandleFunc("/kademlia/find", service.find)
+	http.HandleFunc("/kademlia/file", service.findstore)
 	http.HandleFunc("/node/exit", service.exitServer)
 
 	serving := func() {
@@ -40,15 +39,26 @@ func StartRestServer(s *kademlia.Kademlia) (*restService) {
 	return &service
 }
 
-func (s *restService) store(w http.ResponseWriter, r *http.Request) {
 
-}
-type test_struct struct {
-	Test string
-}
+func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
+	found := ""
 
+	if r.Method == "POST" {
+		found = "insert id of file here"
+	}
+	if r.Method == "GET" {
+		found = "insert content of file here"
+	}
 
-func (s *restService) find(w http.ResponseWriter, r *http.Request) {
+	js, err := json.Marshal(found)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+
 
 }
 

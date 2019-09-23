@@ -23,6 +23,8 @@ if __name__ == "__main__":
     if len(args) == 1:
         parser.error("No address specified")
     url = args[1]
+    if url[0:7] != "http://":
+        url = "http://"+url
 
     # Parse command
     if cmd == "store":
@@ -30,7 +32,7 @@ if __name__ == "__main__":
             parser.error("No file specified to store")
 
         print("Calling...")
-        response = requests.post(url+"/kademlia/store", options.file)
+        response = requests.post(url+"/kademlia/file", options.file)
         print("Status: ",response.status_code)
         print(response.json())
 
@@ -39,7 +41,7 @@ if __name__ == "__main__":
             parser.error("No ID specified to find")
 
         print("Calling...")
-        response = requests.get(url+"/kademlia/find", options.id)
+        response = requests.get(url+"/kademlia/file", options.id)
         print("Status: ",response.status_code)
         print(response.json())
 
@@ -51,7 +53,6 @@ if __name__ == "__main__":
         print("Calling...")
         response = requests.post(url)
         print("Status: ", response.status_code)
-        print(response.json())
 
     else:
         print("Command ", cmd ," not found")
