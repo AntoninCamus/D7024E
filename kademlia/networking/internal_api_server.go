@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/LHJ/D7024E/kademlia"
 	"log"
 	"net"
 
-	"google.golang.org/grpc"
-
+	"github.com/LHJ/D7024E/kademlia"
 	"github.com/LHJ/D7024E/kademlia/model"
+
+	"google.golang.org/grpc"
 )
 
 // GrpcPort is the port where the internal API is exposed
@@ -33,7 +33,7 @@ func (s *InternalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*Pin
 	return &PingAnswer{ReceiverKademliaId: s.kademlia.Me.ID[:]}, nil
 }
 
-//FindContactCall answer
+// FindContactCall answer to FindContactRequest by sending back the NbNeighbors closest neighbors of the provided ID
 func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContactRequest) (*FindContactAnswer, error) {
 	srcContact := &model.Contact{}
 	searchedID := &model.KademliaID{}
@@ -41,10 +41,9 @@ func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 	tmpID, err := model.KademliaIDFromBytes(in.Me.ID)
 	if err != nil {
 		return nil, err
-	} else {
-		srcContact.ID = tmpID
-		srcContact.Address = in.Me.Address
 	}
+	srcContact.ID = tmpID
+	srcContact.Address = in.Me.Address
 	s.kademlia.RegisterContact(srcContact)
 
 	searchedID, err = model.KademliaIDFromBytes(in.SearchedContactId)
@@ -63,8 +62,52 @@ func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 			Address: c.Address,
 		})
 	}
+
 	return &FindContactAnswer{
 		Contacts: newContacts,
+	}, nil
+}
+
+// FindDataCall answer to FindDataRequest by sending back the file if found, and if not act as FindContactCall
+func (s *InternalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest) (*FindDataAnswer, error) {
+	srcContact := &model.Contact{}
+
+	tmpID, err := model.KademliaIDFromBytes(in.Me.ID)
+	if err != nil {
+		return nil, err
+	}
+	srcContact.ID = tmpID
+	srcContact.Address = in.Me.Address
+	s.kademlia.RegisterContact(srcContact)
+
+	searchedFileID, err := model.KademliaIDFromBytes(in.SearchedFileId)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := s.kademlia.LookupData(searchedFileID)
+	if err != nil {
+		//TODO Maybe we should type the error, and check for the "Not Found" particular type
+		modelContacts, err := s.kademlia.LookupContact(searchedFileID, int(in.NbNeighbors))
+		if err != nil {
+			return nil, err
+		}
+
+		var protoContacts []*Contact
+		for _, c := range modelContacts[:] {
+			protoContacts = append(protoContacts, &Contact{
+				ID:      c.ID[:],
+				Address: c.Address,
+			})
+		}
+
+		return &FindDataAnswer{
+			Answer: &FindDataAnswer_DataNotFound{&FindContactAnswer{Contacts: protoContacts}},
+		}, nil
+	}
+
+	return &FindDataAnswer{
+		Answer: &FindDataAnswer_DataFound{data},
 	}, nil
 }
 
