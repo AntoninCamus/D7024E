@@ -15,7 +15,7 @@ end note
 
 user -> node_0 : Put file "banana"
 activate node_0
-node_0 -> node_0 : Compute hash of "banana" which is 101
+node_0 -> node_0 : Compute  of "banana" which is 101
 node_0 -> node_0 : Search on its routing table the closest node, which is node_x
 
 note over node_x

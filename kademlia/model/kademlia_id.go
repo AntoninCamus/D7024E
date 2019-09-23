@@ -1,8 +1,8 @@
 package model
 
 import (
+	"crypto/sha1"
 	"encoding/hex"
-	"fmt"
 	"math/rand"
 )
 
@@ -13,12 +13,13 @@ const IDLength = 20
 type KademliaID [IDLength]byte
 
 // NewKademliaID returns a new instance of a KademliaID based on the string input
-func NewKademliaID(data string) *KademliaID {
-	decoded, _ := hex.DecodeString(data)
+func NewKademliaID(data []byte) *KademliaID {
+	hash := sha1.Sum(data)
+	slice := hash[0:20]
 
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
-		newKademliaID[i] = decoded[i]
+		newKademliaID[i] = slice[i]
 	}
 
 	return &newKademliaID
@@ -54,7 +55,7 @@ func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
 	return true
 }
 
-// CalcDistance returns a new instance of a KademliaID that is built
+// CalcDistance returns a new instance of a KademliaID that is built 
 // through a bitwise XOR operation betweeen kademliaID and target
 func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 	result := KademliaID{}
@@ -67,6 +68,17 @@ func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 // String returns a simple string representation of a KademliaID
 func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
+}
+
+func fromString(data string) *KademliaID {
+	decoded, _ := hex.DecodeString(data)
+
+	newKademliaID := KademliaID{}
+	for i := 0; i < IDLength; i++ {
+		newKademliaID[i] = decoded[i]
+	}
+
+	return &newKademliaID
 }
 
 // KademliaIDFromBytes safely convert an variable array of bytes into a KademliaID
