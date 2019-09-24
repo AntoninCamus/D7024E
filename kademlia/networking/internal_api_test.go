@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"github.com/LHJ/D7024E/kademlia"
 	"testing"
 
 	"github.com/LHJ/D7024E/kademlia/model"
@@ -8,7 +9,11 @@ import (
 )
 
 func Test_Ping(t *testing.T) {
-	s := StartGrpcServer()
+	tk := kademlia.InitKademlia(&model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "127.0.0.1",
+	})
+	s := StartGrpcServer(tk)
 
 	me := model.Contact{
 		ID:      model.NewRandomKademliaID(),
@@ -24,7 +29,11 @@ func Test_Ping(t *testing.T) {
 }
 
 func Test_FindContact(t *testing.T) {
-	s := StartGrpcServer()
+	tk := kademlia.InitKademlia(&model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "127.0.0.1",
+	})
+	s := StartGrpcServer(tk)
 
 	me := model.Contact{
 		ID:      model.NewRandomKademliaID(),
