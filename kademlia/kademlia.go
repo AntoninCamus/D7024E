@@ -44,13 +44,25 @@ func (kademlia *Kademlia) SaveData(data []byte, hash model.KademliaID) {
 	kademlia.files[hash] = data
 }
 
-func (kademlia *Kademlia) LookupLocalContact(target *model.KademliaID) []model.Contact {
+func (kademlia *Kademlia) GetContact(target *model.KademliaID) []model.Contact {
 	// FIXME : Make thread safe
 	return kademlia.table.FindClosestContacts(target, alpha)
 }
 
+func (kademlia *Kademlia) FindContact(target *model.KademliaID) []model.Contact {
+	contacts := kademlia.table.FindClosestContacts(target, alpha)
 
-func (kademlia *Kademlia) LookupLocalData(hash model.KademliaID) ([]byte, bool) {
+	var contactsArray []model.Contact
+	for i, contact := range contacts{ // sort that shit
+		contact.CalcDistance(kademlia.table.Me.ID)
+		contactsArray[i] = contact
+	}
+
+
+	return contacts
+}
+
+func (kademlia *Kademlia) GetData(hash model.KademliaID) ([]byte, bool) {
 	// FIXME : Make thread safe
 	data, exists := kademlia.files[hash]
 	if !exists { //if file doesn't exist
@@ -59,11 +71,12 @@ func (kademlia *Kademlia) LookupLocalData(hash model.KademliaID) ([]byte, bool) 
 	return data, exists
 }
 
-func (kademlia *Kademlia) LookupData(hash model.KademliaID) {
+	func (kademlia *Kademlia) LookupData(hash model.KademliaID) {
 	//check if present locally
-	kademlia.LookupLocalData(hash)
+	kademlia.GetData(hash)
 
-	closestContacts := kademlia.LookupLocalContact(&hash)
+
+	closestContacts := kademlia.getContact(&hash)
 	//for i := range closestContacts {go func() {}()	} //rpc calls
 
 	for range closestContacts { //deal with the rpc
