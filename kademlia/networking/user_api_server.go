@@ -12,7 +12,7 @@ type messageAnswer struct {
 }
 
 // StartRestServer start the REST User API
-func StartRestServer(exitChannel chan os.Signal) (*http.Server) {
+func StartRestServer(exitChannel chan os.Signal) *http.Server {
 	srv := &http.Server{Addr: ":8080"}
 	http.HandleFunc("/node/exit", func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(

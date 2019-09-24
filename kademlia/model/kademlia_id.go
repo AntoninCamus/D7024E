@@ -2,15 +2,14 @@ package model
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/rand"
 )
 
-// the static number of bytes in a KademliaID
+// IDLength is the static number of bytes in a KademliaID
 const IDLength = 20
 
-// type definition of a KademliaID
+// KademliaID is the ID of files and node, represented by a fixed array of byte
 type KademliaID [IDLength]byte
 
 // NewKademliaID returns a new instance of a KademliaID based on the string input
@@ -70,12 +69,12 @@ func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
 }
 
+// KademliaIDFromBytes safely convert an variable array of bytes into a KademliaID
 func KademliaIDFromBytes(unparsedID []byte) (id *KademliaID, err error) {
 	if len(unparsedID) != IDLength {
-		return nil, errors.New(fmt.Sprintf("Invalid sized ID : '%s' of size %d>%d", unparsedID, len(unparsedID), IDLength))
-	} else {
-		var res = &KademliaID{}
-		copy(res[:], unparsedID[:])
-		return res, nil
+		return nil, fmt.Errorf("Invalid sized ID : '%s' of size %d>%d", unparsedID, len(unparsedID), IDLength)
 	}
+	var res = &KademliaID{}
+	copy(res[:], unparsedID[:])
+	return res, nil
 }

@@ -10,10 +10,9 @@ import (
 
 func main() {
 	// Channel creation
-	sigChan := 	make(chan os.Signal, 1)
+	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
-
 
 	// Start servers
 	restSrv := networking.StartRestServer(sigChan)
