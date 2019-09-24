@@ -46,12 +46,12 @@ if __name__ == "__main__":
         print(response.json())
 
     elif cmd == "join":
-        bashCommand = "echo bashing" # Call main -c ip
+        bashCommand = "go run main.go -join "+url
         os.system(bashCommand)
 
     elif cmd == "exit":
         print("Calling...")
-        response = requests.post(url)
+        response = requests.post(url+"/node/exit")
         print("Status: ", response.status_code)
 
     else:

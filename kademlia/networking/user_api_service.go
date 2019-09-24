@@ -18,7 +18,7 @@ type restService struct {
 	server *http.Server
 	singleton *kademlia.Kademlia
 }
-
+var service restService
 // StartRestServer start the REST User API
 func StartRestServer(s *kademlia.Kademlia) (*restService) {
 	fmt.Println("Starting server...")
@@ -65,9 +65,16 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 	w.Write(js)
 }
 
+var results []string
 func find(w http.ResponseWriter, r *http.Request) base64.Encoding {
-	id := r.URL.Path[1:]
+	r.ParseForm()
+	id := (r.Form.Get("id"))
 	print(id)
+
+	/* TODO lookup id and return file
+	kademliaID =
+	service.singleton.LookupData(kademliaID)
+	*/
 
 	var file base64.Encoding // Insert file content here. Call restService.singleton
 	return file
@@ -85,6 +92,8 @@ func store(w http.ResponseWriter, r *http.Request) int {
 	results = append(results, string(body))
 
 	print(string(body))
+
+	// TODO store file and return id
 
 
 	var id int // insert id of file here
