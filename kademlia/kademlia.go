@@ -48,23 +48,24 @@ func (kademlia *Kademlia) RegisterContact(contact *model.Contact) {
 	kademlia.tableMut.Unlock()
 }
 
-func (kademlia *Kademlia) getContacts(target *model.KademliaID, number int) []model.Contact {
+func (kademlia *Kademlia) GetContacts(target *model.KademliaID, number int) []model.Contact {
 	kademlia.tableMut.RLock()
 	defer kademlia.tableMut.RUnlock()
 	return kademlia.table.FindClosestContacts(target, number)
 }
 
-func (kademlia *Kademlia) saveData(data []byte, hash model.KademliaID) {
+func (kademlia *Kademlia) SaveData(hash *model.KademliaID, data []byte) error {
 	kademlia.filesMut.Lock()
-	kademlia.files[hash] = File{
+	kademlia.files[*hash] = File{
 		value:       data,
 		refreshedAt: time.Now(),
 		fileMut:     &sync.Mutex{},
 	}
 	kademlia.filesMut.Unlock()
+	return nil
 }
 
-func (kademlia *Kademlia) getData(hash *model.KademliaID) ([]byte, bool) {
+func (kademlia *Kademlia) GetData(hash *model.KademliaID) ([]byte, bool) {
 	kademlia.filesMut.RLock()
 	file, exists := kademlia.files[*hash]
 	defer func(f File) {
@@ -78,8 +79,8 @@ func (kademlia *Kademlia) getData(hash *model.KademliaID) ([]byte, bool) {
 
 // KADEMLIA ALGORITHMIC FUNCTIONS :
 
-func (kademlia *Kademlia) FindContact(target *model.KademliaID) []model.Contact {
-	contacts := kademlia.getContacts(target, parallelism)
+func (kademlia *Kademlia) LookupContact(target *model.KademliaID) []model.Contact {
+	contacts := kademlia.GetContacts(target, parallelism)
 
 	sort.Slice(contacts[:], func(i, j int) bool {
 		return contacts[i].Less(&contacts[j])
@@ -92,15 +93,16 @@ func (kademlia *Kademlia) FindContact(target *model.KademliaID) []model.Contact 
 	return contacts
 }
 
-func (kademlia *Kademlia) LookupData(target *model.KademliaID) {
+func (kademlia *Kademlia) LookupData(fileID *model.KademliaID) {
 	//check if present locally
-	kademlia.getData(target)
+	kademlia.GetData(fileID)
 
-	closestContacts := kademlia.getContacts(target, parallelism)
+	closestContacts := kademlia.GetContacts(fileID, parallelism)
 	//for i := range closestContacts {go func() {}()	} //rpc calls
 
-	for range closestContacts { //deal with the rpc
-
+	for idx, c := range closestContacts { //deal with the rpc
+		print(idx) //do smth with it
+		print(c.Address)
 	}
 
 }
@@ -108,10 +110,11 @@ func (kademlia *Kademlia) LookupData(target *model.KademliaID) {
 func (kademlia *Kademlia) StoreData(data []byte) (fileID model.KademliaID, err error) {
 	// Lookup node then AddData
 	targetID := model.NewKademliaID(data)
-	contacts := kademlia.FindContact(targetID)
+	closestContacts := kademlia.GetContacts(targetID, parallelism)
 
-	for i := 0; i < len(contacts); i++ {
-		//networking.SendStoreMessage(&(contacts[i]), data), *targetID) //this is potentially not a good idea
+	for idx, c := range closestContacts { //deal with the rpc
+		print(idx) //do smth with it
+		print(c.Address)
 	}
 
 	return *targetID, nil

@@ -30,7 +30,7 @@ func (s *InternalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*Pin
 		return nil, errors.New("Invalid request content")
 	}
 
-	return &PingAnswer{ReceiverKademliaId: s.kademlia.Me.ID[:]}, nil
+	return &PingAnswer{ReceiverKademliaId: s.kademlia.GetIdentity().ID[:]}, nil
 }
 
 // FindContactCall answer to FindContactRequest by sending back the NbNeighbors closest neighbors of the provided ID
@@ -50,10 +50,7 @@ func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 	if err != nil {
 		return nil, err
 	}
-	modelContact, err := s.kademlia.LookupContact(searchedID, int(in.NbNeighbors))
-	if err != nil {
-		return nil, err
-	}
+	modelContact := s.kademlia.GetContacts(searchedID, int(in.NbNeighbors))
 
 	var newContacts []*Contact
 	for _, c := range modelContact[:] {
@@ -85,13 +82,9 @@ func (s *InternalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest)
 		return nil, err
 	}
 
-	data, err := s.kademlia.LookupData(searchedFileID)
-	if err != nil {
-		//TODO Maybe we should type the error, and check for the "Not Found" particular type
-		modelContacts, err := s.kademlia.LookupContact(searchedFileID, int(in.NbNeighbors))
-		if err != nil {
-			return nil, err
-		}
+	data, found := s.kademlia.GetData(searchedFileID)
+	if !found {
+		modelContacts := s.kademlia.GetContacts(searchedFileID, int(in.NbNeighbors))
 
 		var protoContacts []*Contact
 		for _, c := range modelContacts[:] {
@@ -123,12 +116,16 @@ func (s *InternalAPIServer) StoreDataCall(_ context.Context, in *StoreDataReques
 	srcContact.Address = in.Src.Address
 	s.kademlia.RegisterContact(srcContact)
 
-	fileID, err := s.kademlia.Store(in.Data[:])
+	fileID, err := model.KademliaIDFromBytes(in.FileId)
 	if err != nil {
-		return &StoreDataAnswer{FileId: make([]byte, 0)}, nil
+		return nil, err
 	}
 
-	return &StoreDataAnswer{FileId: fileID[:]}, nil
+	err = s.kademlia.SaveData(fileID, in.Data[:])
+	if err != nil {
+		return &StoreDataAnswer{Ok: false}, nil
+	}
+	return &StoreDataAnswer{Ok: true}, nil
 }
 
 // StartGrpcServer start the gRPC internal API

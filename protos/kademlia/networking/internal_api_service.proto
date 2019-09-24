@@ -44,11 +44,12 @@ message FindDataAnswer {
 
 message StoreDataRequest{
     Contact src = 1;
-    bytes data = 2;
+    bytes file_id = 2;
+    bytes data = 3;
 }
 
 message StoreDataAnswer{
-    bytes file_id = 1;
+    bool ok = 1;
 }
 
 // Types

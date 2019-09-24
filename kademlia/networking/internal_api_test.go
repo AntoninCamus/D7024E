@@ -9,7 +9,7 @@ import (
 )
 
 func Test_Ping(t *testing.T) {
-	tk := kademlia.InitKademlia(&model.Contact{
+	tk := kademlia.Init(model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	})
@@ -29,7 +29,7 @@ func Test_Ping(t *testing.T) {
 }
 
 func Test_FindContact(t *testing.T) {
-	tk := kademlia.InitKademlia(&model.Contact{
+	tk := kademlia.Init(model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	})

@@ -153,10 +153,10 @@ func SendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileI
 }
 
 // SendStoreMessage ask to the provided node to store the file, and returns the corresponding ID.
-func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) (*model.KademliaID, error) {
+func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) error {
 	client, conn, err := connect(target.Address)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func() {
 		if err := conn.Close(); err != nil {
@@ -164,7 +164,7 @@ func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) (*m
 		}
 	}()
 
-	ans, err := client.StoreDataCall(
+	done, err := client.StoreDataCall(
 		context.Background(),
 		&StoreDataRequest{
 			Src: &Contact{
@@ -175,16 +175,10 @@ func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) (*m
 		},
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if len(data) == 0 {
-		return nil, errors.New("distant node was unable to store data")
+	if !done.Ok {
+		return errors.New("distant node was unable to store data")
 	}
-
-	fileID, err := model.KademliaIDFromBytes(ans.FileId)
-	if err != nil {
-		return nil, err
-	}
-
-	return fileID, nil
+	return nil
 }
