@@ -1,57 +1,72 @@
 package kademlia
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
 	"errors"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"github.com/LHJ/D7024E/kademlia/networking"
+	"time"
 )
 
+const alpha = 3
+
 type Kademlia struct {
-
 	dbChan chan func() //TODO maybe change sig
-	state KademliaStorage
+	table  *model.RoutingTable
+	files  map[model.KademliaID][]byte
 }
 
-type KademliaStorage struct {
-	table *model.RoutingTable
-	model.KademliaID
-	files []Data
-}
+func Init(me model.Contact) *Kademlia {
+	dbChan := make(chan func(), 100)
 
-func prepare() (*Kademlia) {
-	res := Kademlia{
-		dbChan: nil,
-		state:  KademliaStorage{},
-	}
 	//Run the worker
+	go func(c chan func()) {
+		for true {
+			f := <-c
+			f()
+		}
+	}(dbChan)
 
-	return &res
+	return &Kademlia{
+		dbChan: dbChan,
+		table:  model.NewRoutingTable(me),
+		files:  make(map[model.KademliaID][]byte),
+	}
 }
 
-type Data struct{
-	hash string //how to limit length of strings :thinking:
-	value string
-	lastUpdatedOrAccessed int //some point in time that it was stored/retrieved, from which whether it should be automatically pruned is calculated
-	keepAlive bool //default value true
+type Data struct {
+	hash                  string //how to limit length of strings :thinking:
+	value                 string
+	lastUpdatedOrAccessed time.Time //some point in time that it was stored/retrieved, from which whether it should be automatically pruned is calculated
+	keepAlive             bool      //default value true
 }
 
-func (kademlia *Kademlia) SaveData (data Data){
-	kademlia.state.files = append(kademlia.state.files, data)
+func (kademlia *Kademlia) SaveData(data []byte, hash model.KademliaID) {
+	kademlia.files[hash] = data
 }
 
-func (kademlia *Kademlia) LookupContact(target *model.KademliaID) []model.Contact {
-	kademlia.state.table.FindClosestContacts(target, 12)
+func (kademlia *Kademlia) LookupLocalContact(target *model.KademliaID) []model.Contact {
+	// FIXME : Make thread safe
+	return kademlia.table.FindClosestContacts(target, alpha)
 }
 
-func (kademlia *Kademlia) LookupData(hash string) {
+
+func (kademlia *Kademlia) LookupLocalData(hash model.KademliaID) ([]byte, bool) {
+	// FIXME : Make thread safe
+	data, exists := kademlia.files[hash]
+	if !exists { //if file doesn't exist
+		return nil, exists
+	}
+	return data, exists
+}
+
+func (kademlia *Kademlia) LookupData(hash model.KademliaID) {
 	//check if present locally
-	newHash := model.FromString(hash)
-	closestContacts := kademlia.LookupContact(newHash)
+	kademlia.LookupLocalData(hash)
+
+	closestContacts := kademlia.LookupLocalContact(&hash)
 	//for i := range closestContacts {go func() {}()	} //rpc calls
 
-	for range closestContacts{ //deal with the rpc
+	for range closestContacts { //deal with the rpc
 
 	}
 
@@ -64,10 +79,9 @@ func (kademlia *Kademlia) Store(data []byte) (returnHash string, err error) {
 	//targetAddr := model.NewContact(hash, "notanip") //why in the world would you need a contact
 	contacts := kademlia.LookupContact(hash)
 
-	for i := 0; i< len(contacts); i++ {
-		networking.SendStoreMessage(&(contacts[i]), data)//, *hash) //this is potentially not a good idea
+	for i := 0; i < len(contacts); i++ {
+		networking.SendStoreMessage(&(contacts[i]), data) //, *hash) //this is potentially not a good idea
 	}
-
 
 	return hash.String(), errors.New("damn")
 	//maybe the republish should be here?
