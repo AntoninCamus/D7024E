@@ -6,6 +6,7 @@ service InternalApiService {
     rpc PingCall (PingRequest) returns (PingAnswer);
     rpc FindContactCall (FindContactRequest) returns (FindContactAnswer);
     rpc FindDataCall (FindDataRequest) returns (FindDataAnswer);
+    rpc StoreDataCall (StoreDataRequest) returns (StoreDataAnswer);
 }
 
 // Messages
@@ -19,7 +20,7 @@ message PingAnswer {
 }
 
 message FindContactRequest {
-    Contact me = 1;
+    Contact src = 1;
     bytes searched_contact_id = 2;
     int32 nb_neighbors = 3;
 }
@@ -29,7 +30,7 @@ message FindContactAnswer {
 }
 
 message FindDataRequest {
-    Contact me = 1;
+    Contact src = 1;
     bytes searched_file_id = 2;
     int32 nb_neighbors = 3;
 }
@@ -39,6 +40,15 @@ message FindDataAnswer {
         bytes data_found = 1;
         FindContactAnswer data_not_found = 2;
     }
+}
+
+message StoreDataRequest{
+    Contact src = 1;
+    bytes data = 2;
+}
+
+message StoreDataAnswer{
+    bytes file_id = 1;
 }
 
 // Types

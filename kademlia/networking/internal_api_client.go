@@ -68,7 +68,7 @@ func SendFindContactMessage(target *model.Contact, me *model.Contact, searchedCo
 	ans, err := client.FindContactCall(
 		context.Background(),
 		&FindContactRequest{
-			Me: &Contact{
+			Src: &Contact{
 				ID:      me.ID[:],
 				Address: me.Address,
 			},
@@ -114,7 +114,7 @@ func SendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileI
 	ans, err := client.FindDataCall(
 		context.Background(),
 		&FindDataRequest{
-			Me: &Contact{
+			Src: &Contact{
 				ID:      me.ID[:],
 				Address: me.Address,
 			},
@@ -153,7 +153,38 @@ func SendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileI
 }
 
 // SendStoreMessage ask to the provided node to store the file, and returns the corresponding ID.
-func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) *model.KademliaID {
-	// TODO
-	return model.NewRandomKademliaID()
+func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) (*model.KademliaID, error) {
+	client, conn, err := connect(target.Address)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
+
+	ans, err := client.StoreDataCall(
+		context.Background(),
+		&StoreDataRequest{
+			Src: &Contact{
+				ID:      me.ID[:],
+				Address: me.Address,
+			},
+			Data: data,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) == 0 {
+		return nil, errors.New("distant node was unable to store data")
+	}
+
+	fileID, err := model.KademliaIDFromBytes(ans.FileId)
+	if err != nil {
+		return nil, err
+	}
+
+	return fileID, nil
 }

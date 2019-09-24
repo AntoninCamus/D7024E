@@ -38,12 +38,12 @@ func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 	srcContact := &model.Contact{}
 	searchedID := &model.KademliaID{}
 
-	tmpID, err := model.KademliaIDFromBytes(in.Me.ID)
+	tmpID, err := model.KademliaIDFromBytes(in.Src.ID)
 	if err != nil {
 		return nil, err
 	}
 	srcContact.ID = tmpID
-	srcContact.Address = in.Me.Address
+	srcContact.Address = in.Src.Address
 	s.kademlia.RegisterContact(srcContact)
 
 	searchedID, err = model.KademliaIDFromBytes(in.SearchedContactId)
@@ -72,12 +72,12 @@ func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 func (s *InternalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest) (*FindDataAnswer, error) {
 	srcContact := &model.Contact{}
 
-	tmpID, err := model.KademliaIDFromBytes(in.Me.ID)
+	tmpID, err := model.KademliaIDFromBytes(in.Src.ID)
 	if err != nil {
 		return nil, err
 	}
 	srcContact.ID = tmpID
-	srcContact.Address = in.Me.Address
+	srcContact.Address = in.Src.Address
 	s.kademlia.RegisterContact(srcContact)
 
 	searchedFileID, err := model.KademliaIDFromBytes(in.SearchedFileId)
@@ -109,6 +109,26 @@ func (s *InternalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest)
 	return &FindDataAnswer{
 		Answer: &FindDataAnswer_DataFound{data},
 	}, nil
+}
+
+// StoreDataCall answer to FindDataRequest by sending back the file if found, and if not act as FindContactCall
+func (s *InternalAPIServer) StoreDataCall(_ context.Context, in *StoreDataRequest) (*StoreDataAnswer, error) {
+	srcContact := &model.Contact{}
+
+	tmpID, err := model.KademliaIDFromBytes(in.Src.ID)
+	if err != nil {
+		return nil, err
+	}
+	srcContact.ID = tmpID
+	srcContact.Address = in.Src.Address
+	s.kademlia.RegisterContact(srcContact)
+
+	fileID, err := s.kademlia.Store(in.Data[:])
+	if err != nil {
+		return &StoreDataAnswer{FileId: make([]byte, 0)}, nil
+	}
+
+	return &StoreDataAnswer{FileId: fileID}, nil
 }
 
 // StartGrpcServer start the gRPC internal API
