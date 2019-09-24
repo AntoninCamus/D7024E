@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"github.com/LHJ/D7024E/kademlia/networking"
+	"sort"
 	"time"
 )
 
@@ -52,11 +53,13 @@ func (kademlia *Kademlia) GetContact(target *model.KademliaID) []model.Contact {
 func (kademlia *Kademlia) FindContact(target *model.KademliaID) []model.Contact {
 	contacts := kademlia.table.FindClosestContacts(target, alpha)
 
-	var contactsArray []model.Contact
-	for i, contact := range contacts{ // sort that shit
-		contact.CalcDistance(kademlia.table.Me.ID)
-		contactsArray[i] = contact
-	}
+	sort.Slice(contacts[:], func(i, j int) bool {
+		return contacts[i].Less(&contacts[j])
+	})
+
+	//send out grpcs
+
+	//handle the 3 incoming channels
 
 
 	return contacts
