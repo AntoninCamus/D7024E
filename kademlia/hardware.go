@@ -36,7 +36,7 @@ func getAddress() (string, error) {
 			case *net.IPAddr:
 				ip = v.IP
 			}
-			if ip.IsGlobalUnicast() && ip.To4() != nil {
+			if ip != nil && ip.IsGlobalUnicast() && ip.To4() != nil {
 				return ip.To4().String(), nil
 			}
 		}
@@ -44,6 +44,7 @@ func getAddress() (string, error) {
 	return "", err
 }
 
+// GetContactFromHW returns a contact created from the hardware on which the node is running.
 func GetContactFromHW() model.Contact {
 	hash, err := getMachineHash()
 	if err != nil {

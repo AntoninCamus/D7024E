@@ -37,7 +37,7 @@ func NewRandomKademliaID() *KademliaID {
 }
 
 // Less returns true if kademliaID < otherKademliaID (bitwise)
-func (kademliaID KademliaID) Less(otherKademliaID *KademliaID) bool {
+func (kademliaID KademliaID) less(otherKademliaID *KademliaID) bool {
 	for i := 0; i < IDLength; i++ {
 		if kademliaID[i] != otherKademliaID[i] {
 			return kademliaID[i] < otherKademliaID[i]
@@ -47,7 +47,7 @@ func (kademliaID KademliaID) Less(otherKademliaID *KademliaID) bool {
 }
 
 // Equals returns true if kademliaID == otherKademliaID (bitwise)
-func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
+func (kademliaID KademliaID) equals(otherKademliaID *KademliaID) bool {
 	for i := 0; i < IDLength; i++ {
 		if kademliaID[i] != otherKademliaID[i] {
 			return false
@@ -58,7 +58,7 @@ func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
 
 // CalcDistance returns a new instance of a KademliaID that is built
 // through a bitwise XOR operation betweeen kademliaID and target
-func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
+func (kademliaID KademliaID) calcDistance(target *KademliaID) *KademliaID {
 	result := KademliaID{}
 	for i := 0; i < IDLength; i++ {
 		result[i] = kademliaID[i] ^ target[i]
@@ -71,7 +71,7 @@ func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
 }
 
-func NewKademliaIDFromString(data string) *KademliaID {
+func newKademliaIDFromString(data string) *KademliaID {
 	decoded, _ := hex.DecodeString(data)
 
 	newKademliaID := KademliaID{}
@@ -85,7 +85,7 @@ func NewKademliaIDFromString(data string) *KademliaID {
 // KademliaIDFromBytes safely convert an variable array of bytes into a KademliaID
 func KademliaIDFromBytes(unparsedID []byte) (id *KademliaID, err error) {
 	if len(unparsedID) != IDLength {
-		return nil, fmt.Errorf("Invalid sized ID : '%s' of size %d>%d", unparsedID, len(unparsedID), IDLength)
+		return nil, fmt.Errorf("invalid sized ID : '%s' of size %d>%d", unparsedID, len(unparsedID), IDLength)
 	}
 	var res = &KademliaID{}
 	copy(res[:], unparsedID[:])
