@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/LHJ/D7024E/kademlia"
+	"github.com/LHJ/D7024E/kademlia/model"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -44,13 +45,9 @@ func StartRestServer(s *kademlia.Kademlia) (*restService) {
 func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 	var found interface{} // Generic
 
-	// Store
-	if r.Method == "POST" {
+	if r.Method == "POST" { // Store
 		found = store(w, r)
-	}
-
-	// Find
-	if r.Method == "GET" {
+	} else if r.Method == "GET" { // Find
 		found = find(w, r)
 	}
 
@@ -65,38 +62,30 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 	w.Write(js)
 }
 
-var results []string
 func find(w http.ResponseWriter, r *http.Request) base64.Encoding {
+	// Read input
 	r.ParseForm()
 	id := (r.Form.Get("id"))
 	print(id)
 
-	/* TODO lookup id and return file
-	kademliaID =
-	service.singleton.LookupData(kademliaID)
-	*/
-
-	var file base64.Encoding // Insert file content here. Call restService.singleton
+	// Retrieve file
+	kademliaID := model.NewKademliaID(id)
+	file := service.singleton.LookupData(kademliaID)
 	return file
 
 }
 
-func store(w http.ResponseWriter, r *http.Request) int {
-	var results []string
-
+func store(w http.ResponseWriter, r *http.Request) string {
+	// Read input
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body",
 			http.StatusInternalServerError)
 	}
-	results = append(results, string(body))
 
-	print(string(body))
-
-	// TODO store file and return id
-
-
-	var id int // insert id of file here
+	// Store file
+	file := []byte(string(body))
+	id, err := service.singleton.Store(file)
 	return id
 }
 
