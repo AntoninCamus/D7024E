@@ -26,6 +26,7 @@ type File struct {
 
 // CONSTRUCTOR
 
+//Init create a new kademlia object
 func Init(me model.Contact) *Kademlia {
 	return &Kademlia{
 		table:    model.NewRoutingTable(me),
@@ -37,10 +38,12 @@ func Init(me model.Contact) *Kademlia {
 
 // LOCAL (THREAD SAFE, BASIC) FUNCTIONS :
 
+//GetIdentity returns the contact information of the host
 func (kademlia *Kademlia) GetIdentity() model.Contact {
 	return kademlia.table.Me
 }
 
+//RegisterContact add if possible the new *contact* to the routing table
 func (kademlia *Kademlia) RegisterContact(contact *model.Contact) {
 	kademlia.tableMut.Lock()
 	// FIXME the bucket is unlimited atm, to fix directly in it
@@ -48,16 +51,18 @@ func (kademlia *Kademlia) RegisterContact(contact *model.Contact) {
 	kademlia.tableMut.Unlock()
 }
 
-func (kademlia *Kademlia) GetContacts(target *model.KademliaID, number int) []model.Contact {
+//GetContacts returns the *number* closest contacts to the *searchedID*
+func (kademlia *Kademlia) GetContacts(searchedID *model.KademliaID, number int) []model.Contact {
 	kademlia.tableMut.RLock()
 	defer kademlia.tableMut.RUnlock()
-	return kademlia.table.FindClosestContacts(target, number)
+	return kademlia.table.FindClosestContacts(searchedID, number)
 }
 
-func (kademlia *Kademlia) SaveData(hash *model.KademliaID, data []byte) error {
+//SaveData save the content of the file *content* under the *fileID*
+func (kademlia *Kademlia) SaveData(fileID *model.KademliaID, content []byte) error {
 	kademlia.filesMut.Lock()
-	kademlia.files[*hash] = File{
-		value:       data,
+	kademlia.files[*fileID] = File{
+		value:       content,
 		refreshedAt: time.Now(),
 		fileMut:     &sync.Mutex{},
 	}
@@ -65,14 +70,17 @@ func (kademlia *Kademlia) SaveData(hash *model.KademliaID, data []byte) error {
 	return nil
 }
 
-func (kademlia *Kademlia) GetData(hash *model.KademliaID) ([]byte, bool) {
+//GetData returns the content corresponding to the *fileID*, as well as if the file was found
+func (kademlia *Kademlia) GetData(fileID *model.KademliaID) ([]byte, bool) {
 	kademlia.filesMut.RLock()
-	file, exists := kademlia.files[*hash]
-	defer func(f File) {
-		f.fileMut.Lock()
-		f.refreshedAt = time.Now()
-		f.fileMut.Unlock()
-	}(file)
+	file, exists := kademlia.files[*fileID]
+	if exists {
+		defer func(f File) {
+			f.fileMut.Lock()
+			f.refreshedAt = time.Now()
+			f.fileMut.Unlock()
+		}(file)
+	}
 	kademlia.filesMut.RUnlock()
 	return file.value, exists
 }
