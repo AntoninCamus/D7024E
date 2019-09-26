@@ -11,6 +11,7 @@ const parallelism = 3
 
 // TYPES
 
+//Kademlia is the model of the Kademlia DHT on which the algorithm works
 type Kademlia struct {
 	table    *model.RoutingTable
 	files    map[model.KademliaID]File
@@ -18,6 +19,7 @@ type Kademlia struct {
 	filesMut *sync.RWMutex
 }
 
+//File is the internal representation of a file
 type File struct {
 	value       []byte
 	refreshedAt time.Time

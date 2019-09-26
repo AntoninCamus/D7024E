@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/LHJ/D7024E/kademlia"
 	"log"
 	"os"
 	"os/signal"
@@ -14,10 +15,11 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
 
+	k := kademlia.Init(kademlia.GetContactFromHW())
+
 	// Start servers
 	restSrv := networking.StartRestServer(sigChan)
-	grpcSrv := networking.StartGrpcServer()
-
+	grpcSrv := networking.StartGrpcServer(k)
 	// Wait for signal
 	<-sigChan
 
