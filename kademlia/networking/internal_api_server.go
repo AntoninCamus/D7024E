@@ -14,27 +14,27 @@ import (
 )
 
 // GrpcPort is the port where the internal API is exposed
-const GrpcPort int = 9090
+const grpcPort int = 9090
 
 // InternalAPIServer is the grpc server that serves the internal API
-type InternalAPIServer struct {
+type internalAPIServer struct {
 	kademlia *kademlia.Kademlia
 }
 
 // PingCall anwser to PingRequest by checking if they sent a valid KademliaID
-func (s *InternalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*PingAnswer, error) {
+func (s *internalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*PingAnswer, error) {
 	log.Printf("Ping received")
 
 	if len(in.GetSenderKademliaId()) != model.IDLength {
 		log.Printf("Error sent : Invalid request content")
-		return nil, errors.New("Invalid request content")
+		return nil, errors.New("invalid request content")
 	}
 
 	return &PingAnswer{ReceiverKademliaId: s.kademlia.GetIdentity().ID[:]}, nil
 }
 
 // FindContactCall answer to FindContactRequest by sending back the NbNeighbors closest neighbors of the provided ID
-func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContactRequest) (*FindContactAnswer, error) {
+func (s *internalAPIServer) FindContactCall(ctx context.Context, in *FindContactRequest) (*FindContactAnswer, error) {
 	srcContact := &model.Contact{}
 	searchedID := &model.KademliaID{}
 
@@ -66,7 +66,7 @@ func (s *InternalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 }
 
 // FindDataCall answer to FindDataRequest by sending back the file if found, and if not act as FindContactCall
-func (s *InternalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest) (*FindDataAnswer, error) {
+func (s *internalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest) (*FindDataAnswer, error) {
 	srcContact := &model.Contact{}
 
 	tmpID, err := model.KademliaIDFromBytes(in.Src.ID)
@@ -105,7 +105,7 @@ func (s *InternalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest)
 }
 
 // StoreDataCall answer to FindDataRequest by sending back the file if found, and if not act as FindContactCall
-func (s *InternalAPIServer) StoreDataCall(_ context.Context, in *StoreDataRequest) (*StoreDataAnswer, error) {
+func (s *internalAPIServer) StoreDataCall(_ context.Context, in *StoreDataRequest) (*StoreDataAnswer, error) {
 	srcContact := &model.Contact{}
 
 	tmpID, err := model.KademliaIDFromBytes(in.Src.ID)
@@ -130,14 +130,14 @@ func (s *InternalAPIServer) StoreDataCall(_ context.Context, in *StoreDataReques
 
 // StartGrpcServer start the gRPC internal API
 func StartGrpcServer(kademlia *kademlia.Kademlia) *grpc.Server {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", GrpcPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	//Creating and registering the server
 	grpcServer := grpc.NewServer()
-	RegisterInternalApiServiceServer(grpcServer, &InternalAPIServer{kademlia: kademlia})
+	RegisterInternalApiServiceServer(grpcServer, &internalAPIServer{kademlia: kademlia})
 
 	log.Printf("GrpcServer ready ...")
 	serving := func() {

@@ -13,7 +13,7 @@ import (
 
 func connect(address string) (InternalApiServiceClient, *grpc.ClientConn, error) {
 	conn, err := grpc.Dial(
-		fmt.Sprintf("%s:%d", address, GrpcPort),
+		fmt.Sprintf("%s:%d", address, grpcPort),
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 		grpc.WithTimeout(3*time.Second),

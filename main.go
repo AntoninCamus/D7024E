@@ -10,17 +10,16 @@ import (
 )
 
 func main() {
-	singleton := kademlia.Kademlia{} // Why wasn't this here?
-
 	// Channel creation
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
 
+	k := kademlia.Init(kademlia.GetContactFromHW())
+
 	// Start servers
 	restSrv := networking.StartRestServer(sigChan)
-	grpcSrv := networking.StartGrpcServer(&singleton)
-
+	grpcSrv := networking.StartGrpcServer(k)
 	// Wait for signal
 	<-sigChan
 

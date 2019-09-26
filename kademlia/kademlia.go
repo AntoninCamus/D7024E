@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"github.com/LHJ/D7024E/kademlia/networking"
+	"sort"
 	"sync"
 	"time"
 )
@@ -13,6 +14,7 @@ const k = 20
 
 // TYPES
 
+//Kademlia is the model of the Kademlia DHT on which the algorithm works
 type Kademlia struct {
 	table    *model.RoutingTable
 	files    map[model.KademliaID]File
@@ -20,19 +22,16 @@ type Kademlia struct {
 	filesMut *sync.RWMutex
 }
 
+//File is the internal representation of a file
 type File struct {
 	value       []byte
 	refreshedAt time.Time
 	fileMut     *sync.Mutex
 }
 
-type shortListContact struct {
-	contact   *model.Contact
-	contacted bool
-}
-
 // CONSTRUCTOR
 
+//Init create a new kademlia object
 func Init(me model.Contact) *Kademlia {
 	return &Kademlia{
 		table:    model.NewRoutingTable(me),
@@ -43,11 +42,12 @@ func Init(me model.Contact) *Kademlia {
 }
 
 // LOCAL (THREAD SAFE, BASIC) FUNCTIONS :
-
+//GetIdentity returns the contact information of the host
 func (kademlia *Kademlia) GetIdentity() *model.Contact {
 	return &kademlia.table.Me
 }
 
+//RegisterContact add if possible the new *contact* to the routing table
 func (kademlia *Kademlia) RegisterContact(contact *model.Contact) {
 	kademlia.tableMut.Lock()
 	// FIXME the bucket is unlimited atm, to fix directly in it
@@ -55,16 +55,18 @@ func (kademlia *Kademlia) RegisterContact(contact *model.Contact) {
 	kademlia.tableMut.Unlock()
 }
 
-func (kademlia *Kademlia) GetContacts(target *model.KademliaID, number int) []model.Contact {
+//GetContacts returns the *number* closest contacts to the *searchedID*
+func (kademlia *Kademlia) GetContacts(searchedID *model.KademliaID, number int) []model.Contact {
 	kademlia.tableMut.RLock()
 	defer kademlia.tableMut.RUnlock()
-	return kademlia.table.FindClosestContacts(target, number)
+	return kademlia.table.FindClosestContacts(searchedID, number)
 }
 
-func (kademlia *Kademlia) SaveData(hash *model.KademliaID, data []byte) error {
+//SaveData save the content of the file *content* under the *fileID*
+func (kademlia *Kademlia) SaveData(fileID *model.KademliaID, content []byte) error {
 	kademlia.filesMut.Lock()
-	kademlia.files[*hash] = File{
-		value:       data,
+	kademlia.files[*fileID] = File{
+		value:       content,
 		refreshedAt: time.Now(),
 		fileMut:     &sync.Mutex{},
 	}
@@ -72,14 +74,17 @@ func (kademlia *Kademlia) SaveData(hash *model.KademliaID, data []byte) error {
 	return nil
 }
 
-func (kademlia *Kademlia) GetData(hash *model.KademliaID) ([]byte, bool) {
+//GetData returns the content corresponding to the *fileID*, as well as if the file was found
+func (kademlia *Kademlia) GetData(fileID *model.KademliaID) ([]byte, bool) {
 	kademlia.filesMut.RLock()
-	file, exists := kademlia.files[*hash]
-	defer func(f File) {
-		f.fileMut.Lock()
-		f.refreshedAt = time.Now()
-		f.fileMut.Unlock()
-	}(file)
+	file, exists := kademlia.files[*fileID]
+	if exists {
+		defer func(f File) {
+			f.fileMut.Lock()
+			f.refreshedAt = time.Now()
+			f.fileMut.Unlock()
+		}(file)
+	}
 	kademlia.filesMut.RUnlock()
 	return file.value, exists
 }
@@ -87,9 +92,21 @@ func (kademlia *Kademlia) GetData(hash *model.KademliaID) ([]byte, bool) {
 // KADEMLIA ALGORITHMIC FUNCTIONS :
 
 func (kademlia *Kademlia) LookupContact(target *model.KademliaID) []model.Contact {
+	contacts := kademlia.GetContacts(target, parallelism)
+  	//me := kademlia.GetIdentity()
+	sort.Slice(contacts[:], func(i, j int) bool {
+		return contacts[i].Less(&contacts[j])
+	})
 
+
+	contactedContacts := make(map[model.KademliaID]model.Contact)
+	contactedContacts[*kademlia.GetIdentity().ID] = kademlia.GetIdentity()
+	for _, contact := range contacts{
+		contactedContacts[*contact.ID] = contact
+	}
 
 	//send out grpcs
+
 	//handle the 3 incoming channels
 
 	//return contacts
