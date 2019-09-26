@@ -89,10 +89,17 @@ func (kademlia *Kademlia) GetData(fileID *model.KademliaID) ([]byte, bool) {
 
 func (kademlia *Kademlia) LookupContact(target *model.KademliaID) []model.Contact {
 	contacts := kademlia.GetContacts(target, parallelism)
-
+  	//me := kademlia.GetIdentity()
 	sort.Slice(contacts[:], func(i, j int) bool {
 		return contacts[i].Less(&contacts[j])
 	})
+
+
+	contactedContacts := make(map[model.KademliaID]model.Contact)
+	contactedContacts[*kademlia.GetIdentity().ID] = kademlia.GetIdentity()
+	for _, contact := range contacts{
+		contactedContacts[*contact.ID] = contact
+	}
 
 	//send out grpcs
 
