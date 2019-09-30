@@ -7,8 +7,6 @@ import (
 
 	"github.com/LHJ/D7024E/kademlia"
 	"github.com/LHJ/D7024E/kademlia/model"
-
-	"github.com/LHJ/D7024E/kademlia/networking"
 )
 
 func main() {
@@ -20,8 +18,8 @@ func main() {
 	k := model.NewKademliaNetwork(kademlia.GetContactFromHW())
 
 	// Start servers
-	restSrv := networking.StartRestServer(sigChan)
-	grpcSrv := networking.StartGrpcServer(k)
+	restSrv := kademlia.StartRestServer(k, sigChan)
+	grpcSrv := kademlia.StartGrpcServer(k)
 	// Wait for signal
 	<-sigChan
 

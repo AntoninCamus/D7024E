@@ -3,7 +3,6 @@ package kademlia
 import (
 	"errors"
 	"github.com/LHJ/D7024E/kademlia/model"
-	"github.com/LHJ/D7024E/kademlia/networking"
 )
 
 const parallelism = 3
@@ -25,7 +24,7 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		for !done {
 			c := <-contactIn //contact target
 			if c != (model.Contact{}) {
-				contacts, err := networking.SendFindContactMessage(&c, net.GetIdentity(), target, k)
+				contacts, err := SendFindContactMessage(&c, net.GetIdentity(), target, k)
 				//should this check whether target is you?
 				if err != nil {
 					if contacts != nil {
@@ -93,7 +92,7 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 			c := <-contactIn
 			if c != (model.Contact{}) {
 				// Do stuff
-				data, contacts, err := networking.SendFindDataMessage(&c, net.GetIdentity(), fileID, 3) // Best value for nbNeighbors?
+				data, contacts, err := SendFindDataMessage(&c, net.GetIdentity(), fileID, 3) // Best value for nbNeighbors?
 				if err != nil {
 					if data != nil {
 						dataOut <- data
@@ -166,7 +165,7 @@ func StoreData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID
 	contacts := LookupContact(net, targetID)
 
 	for _, contact := range contacts {
-		networking.SendStoreMessage(&contact, net.GetIdentity(), data)
+		SendStoreMessage(&contact, net.GetIdentity(), data)
 	}
 
 	return *targetID, nil

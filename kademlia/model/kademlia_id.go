@@ -26,6 +26,27 @@ func NewKademliaID(data []byte) *KademliaID {
 	return &newKademliaID
 }
 
+func KademliaIDFromString(data string) *KademliaID {
+	decoded, _ := hex.DecodeString(data)
+
+	newKademliaID := KademliaID{}
+	for i := 0; i < IDLength; i++ {
+		newKademliaID[i] = decoded[i]
+	}
+
+	return &newKademliaID
+}
+
+// KademliaIDFromBytes safely cast an variable array of bytes into a KademliaID
+func KademliaIDFromBytes(unparsedID []byte) (id *KademliaID, err error) {
+	if len(unparsedID) != IDLength {
+		return nil, fmt.Errorf("invalid sized ID : '%s' of size %d>%d", unparsedID, len(unparsedID), IDLength)
+	}
+	var res = &KademliaID{}
+	copy(res[:], unparsedID[:])
+	return res, nil
+}
+
 // NewRandomKademliaID returns a new instance of a random KademliaID,
 // change this to a better version if you like
 func NewRandomKademliaID() *KademliaID {
@@ -69,25 +90,4 @@ func (kademliaID KademliaID) calcDistance(target *KademliaID) *KademliaID {
 // String returns a simple string representation of a KademliaID
 func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
-}
-
-func newKademliaIDFromString(data string) *KademliaID {
-	decoded, _ := hex.DecodeString(data)
-
-	newKademliaID := KademliaID{}
-	for i := 0; i < IDLength; i++ {
-		newKademliaID[i] = decoded[i]
-	}
-
-	return &newKademliaID
-}
-
-// KademliaIDFromBytes safely convert an variable array of bytes into a KademliaID
-func KademliaIDFromBytes(unparsedID []byte) (id *KademliaID, err error) {
-	if len(unparsedID) != IDLength {
-		return nil, fmt.Errorf("invalid sized ID : '%s' of size %d>%d", unparsedID, len(unparsedID), IDLength)
-	}
-	var res = &KademliaID{}
-	copy(res[:], unparsedID[:])
-	return res, nil
 }
