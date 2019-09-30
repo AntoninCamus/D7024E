@@ -2,8 +2,6 @@ package kademlia
 
 import (
 	"errors"
-	"sort"
-
 	"github.com/LHJ/D7024E/kademlia/model"
 	"github.com/LHJ/D7024E/kademlia/networking"
 )
@@ -12,21 +10,64 @@ const parallelism = 3
 const k = 20
 
 func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model.Contact {
-	contacts := net.GetContacts(target, parallelism)
-	//me := net.GetIdentity()
-	sort.Slice(contacts[:], func(i, j int) bool {
-		return contacts[i].Less(&contacts[j])
-	})
-
-	contactedContacts := make(map[model.KademliaID]*model.Contact)
-	contactedContacts[*net.GetIdentity().ID] = net.GetIdentity()
-	for _, contact := range contacts {
-		contactedContacts[*contact.ID] = &contact
+	//check if present locally
+	if target == net.GetIdentity().ID {
+		return nil
 	}
 
-	//send out grpcs
+	closestContacts := net.GetContacts(target, parallelism)
+	contactIn := make(chan model.Contact, parallelism)
+	contactOut := make(chan model.Contact, parallelism)
 
-	//handle the 3 incoming channels
+	// Worker routine
+	run := func(contactIn chan model.Contact, contactOut chan model.Contact) {
+		var done = false
+		for !done {
+			c := <-contactIn //contact target
+			if c != (model.Contact{}) {
+				contacts, err := networking.SendFindContactMessage(&c, net.GetIdentity(), target, k)
+				//should this check whether target is you?
+				if err != nil {
+					if contacts != nil {
+						for _, contact := range contacts {
+							contactOut <- *contact
+						}
+					}
+				}
+			} else {
+				done = true
+			}
+		}
+	}
+
+	// Create workers
+	for i, _ := range closestContacts {
+		contactIn <- closestContacts[i]
+		go run(contactIn, contactOut)
+	}
+
+	numWorkers := parallelism
+	for numWorkers > 0 {
+		receivedContact := <-contactOut
+		// If closer than one of closestContacts, insert it instead and add it to contactIn
+		// If not insert an empty contact to kill a worker
+		foundCloser := false
+
+		for i, contact := range closestContacts {
+			if receivedContact.Less(&contact) { // Check if closer
+				closestContacts[i] = receivedContact
+
+				contactIn <- receivedContact // Queue up another contact for contacting
+				foundCloser = true
+				break
+			}
+		}
+
+		if !foundCloser {
+			contactIn <- model.Contact{} // Kill a worker if it couldn't find any closer contacts
+			numWorkers--
+		}
+	}
 
 	//return contacts
 	return nil
