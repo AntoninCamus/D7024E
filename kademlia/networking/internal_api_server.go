@@ -7,9 +7,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/LHJ/D7024E/kademlia"
 	"github.com/LHJ/D7024E/kademlia/model"
-
 	"google.golang.org/grpc"
 )
 
@@ -18,7 +16,7 @@ const grpcPort int = 9090
 
 // InternalAPIServer is the grpc server that serves the internal API
 type internalAPIServer struct {
-	kademlia *kademlia.Kademlia
+	kademlia *model.KademliaNetwork
 }
 
 // PingCall anwser to PingRequest by checking if they sent a valid KademliaID
@@ -129,7 +127,7 @@ func (s *internalAPIServer) StoreDataCall(_ context.Context, in *StoreDataReques
 }
 
 // StartGrpcServer start the gRPC internal API
-func StartGrpcServer(kademlia *kademlia.Kademlia) *grpc.Server {
+func StartGrpcServer(kademlia *model.KademliaNetwork) *grpc.Server {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

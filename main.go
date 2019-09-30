@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/LHJ/D7024E/kademlia"
 	"log"
 	"os"
 	"os/signal"
+
+	"github.com/LHJ/D7024E/kademlia"
+	"github.com/LHJ/D7024E/kademlia/model"
 
 	"github.com/LHJ/D7024E/kademlia/networking"
 )
@@ -15,7 +17,7 @@ func main() {
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, os.Kill)
 
-	k := kademlia.Init(kademlia.GetContactFromHW())
+	k := model.NewKademliaNetwork(kademlia.GetContactFromHW())
 
 	// Start servers
 	restSrv := networking.StartRestServer(sigChan)

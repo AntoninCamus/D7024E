@@ -21,7 +21,7 @@ type file struct {
 }
 
 //Init create a new kademlia object
-func Init(me Contact) *KademliaNetwork {
+func NewKademliaNetwork(me Contact) *KademliaNetwork {
 	return &KademliaNetwork{
 		table:    NewRoutingTable(me),
 		files:    make(map[KademliaID]file),

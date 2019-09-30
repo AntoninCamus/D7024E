@@ -1,24 +1,24 @@
-package kademlia
+package model
 
 import (
-	"github.com/LHJ/D7024E/kademlia/model"
-	"gotest.tools/assert"
 	"testing"
+
+	"gotest.tools/assert"
 )
 
 // LOCAL (THREAD SAFE, BASIC) FUNCTIONS :
 func TestKademlia_GetIdentity(t *testing.T) {
-	me := model.NewContact(model.NewRandomKademliaID(), "127.0.0.1")
+	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
 
-	kad := Init(me)
+	kad := NewKademliaNetwork(me)
 	assert.Equal(t, kad.GetIdentity(), me)
 }
 
 func TestKademlia_SaveAndGetData(t *testing.T) {
-	me := model.NewContact(model.NewRandomKademliaID(), "127.0.0.1")
-	kad := Init(me)
+	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
+	kad := NewKademliaNetwork(me)
 
-	fileID := model.NewRandomKademliaID()
+	fileID := NewRandomKademliaID()
 	content := []byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
 	err := kad.SaveData(fileID, content)
 	assert.NilError(t, err)
@@ -27,26 +27,26 @@ func TestKademlia_SaveAndGetData(t *testing.T) {
 	assert.Assert(t, found)
 	assert.DeepEqual(t, contentFound, content)
 
-	contentFound, found = kad.GetData(model.NewRandomKademliaID())
+	contentFound, found = kad.GetData(NewRandomKademliaID())
 	assert.Assert(t, !found)
 	assert.Equal(t, len(contentFound), 0)
 }
 
 func TestKademlia_RegisterAndGetContact(t *testing.T) {
-	me := model.NewContact(model.NewRandomKademliaID(), "127.0.0.1")
-	kad := Init(me)
+	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
+	kad := NewKademliaNetwork(me)
 
 	emptyContacts := kad.GetContacts(me.ID, 10)
 	assert.Equal(t, len(emptyContacts), 0)
 
-	c1 := model.NewContact(model.NewRandomKademliaID(), "127.0.1.1")
-	c2 := model.NewContact(model.NewRandomKademliaID(), "127.0.2.1")
+	c1 := NewContact(NewRandomKademliaID(), "127.0.1.1")
+	c2 := NewContact(NewRandomKademliaID(), "127.0.2.1")
 	kad.RegisterContact(&c1)
 	kad.RegisterContact(&c2)
 	contacts := kad.GetContacts(me.ID, 10)
 	assert.Equal(t, len(contacts), 2)
 
-	contains := func(arr []model.Contact, elem model.Contact) bool {
+	contains := func(arr []Contact, elem Contact) bool {
 		for _, a := range arr {
 			if a.ID == elem.ID && a.Address == elem.Address {
 				return true
