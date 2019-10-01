@@ -39,37 +39,38 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		}
 	}
 
-	// Create workers
-	for i, _ := range closestContacts {
-		contactIn <- closestContacts[i]
-		go run(contactIn, contactOut)
-	}
+	if len(closestContacts) > 0 {
+		// Create workers
+		for i := range closestContacts {
+			contactIn <- closestContacts[i]
+			go run(contactIn, contactOut)
+		}
 
-	numWorkers := parallelism
-	for numWorkers > 0 {
-		receivedContact := <-contactOut
-		// If closer than one of closestContacts, insert it instead and add it to contactIn
-		// If not insert an empty contact to kill a worker
-		foundCloser := false
+		numWorkers := parallelism
+		for numWorkers > 0 {
+			receivedContact := <-contactOut
+			// If closer than one of closestContacts, insert it instead and add it to contactIn
+			// If not insert an empty contact to kill a worker
+			foundCloser := false
 
-		for i, contact := range closestContacts {
-			if receivedContact.Less(&contact) { // Check if closer
-				closestContacts[i] = receivedContact
+			for i, contact := range closestContacts {
+				if receivedContact.Less(&contact) { // Check if closer
+					closestContacts[i] = receivedContact
 
-				contactIn <- receivedContact // Queue up another contact for contacting
-				foundCloser = true
-				break
+					contactIn <- receivedContact // Queue up another contact for contacting
+					foundCloser = true
+					break
+				}
+			}
+
+			if !foundCloser {
+				contactIn <- model.Contact{} // Kill a worker if it couldn't find any closer contacts
+				numWorkers--
 			}
 		}
-
-		if !foundCloser {
-			contactIn <- model.Contact{} // Kill a worker if it couldn't find any closer contacts
-			numWorkers--
-		}
 	}
 
-	//return contacts
-	return nil
+	return closestContacts
 }
 
 func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, error) {
@@ -151,21 +152,13 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 }
 
 func StoreData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID, err error) {
-	/*// Lookup node then AddData
 	targetID := model.NewKademliaID(data)
-	closestContacts := kademlia.GetContacts(targetID, parallelism)
-
-	for idx, c := range closestContacts { //deal with the rpc
-		print(idx) //do smth with it
-		print(c.Address)
-	}
-	*/
-	targetID := model.NewKademliaID(data)
-
-	contacts := LookupContact(net, targetID)
-
+	contacts := append(LookupContact(net, targetID), *net.GetIdentity())
 	for _, contact := range contacts {
-		SendStoreMessage(&contact, net.GetIdentity(), data)
+		err = SendStoreMessage(&contact, net.GetIdentity(), data)
+		if err != nil {
+			return fileID, err
+		}
 	}
 
 	return *targetID, nil

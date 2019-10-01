@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-import requests
 import os
-
+import requests
 from optparse import OptionParser
-
 
 if __name__ == "__main__":
     usage = "usage: %prog [options] command IP:port"

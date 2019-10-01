@@ -52,14 +52,14 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" { // Store
 		fileID, err := store(w, r, s.kademliaNetwork)
 		if err != nil {
-			log.Printf("API ERROR : POST {%s} got %s", r, err.Error())
+			log.Printf("API ERROR : %s", err.Error())
 			return
 		}
 		answer = struct{ fileID string }{fileID: fileID}
 	} else if r.Method == "GET" { // Find
 		data, err := find(w, r, s.kademliaNetwork)
 		if err != nil {
-			log.Printf("API ERROR : GET {%s} got %s", r, err.Error())
+			log.Printf("API ERROR : %s", err.Error())
 			return
 		}
 		answer = struct{ data string }{data: data}
@@ -109,11 +109,13 @@ func store(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwor
 
 	// Store file
 	file := []byte(string(body))
+	log.Print("Trying to store :", file)
 	id, err := StoreData(network, file)
 	if err != nil {
 		http.Error(w, "Error while storing file", http.StatusInternalServerError)
 		return "", err
 	}
+	log.Print("Store successful, new state is :", network.PrintFileState())
 	return id.String(), nil
 }
 

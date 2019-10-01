@@ -1,11 +1,13 @@
 package model
 
 import (
+	"fmt"
+	"log"
 	"sync"
 	"time"
 )
 
-//KademliaNetwork is the model of the KademliaNetwork DHT on which the algorithm works
+//KademliaNetwork is the kademlia of the KademliaNetwork DHT on which the algorithm works
 type KademliaNetwork struct {
 	table    *RoutingTable
 	files    map[KademliaID]file
@@ -20,7 +22,7 @@ type file struct {
 	fileMut     *sync.Mutex
 }
 
-//Init create a new kademlia object
+//NewKademliaNetwork create a new kademlia object
 func NewKademliaNetwork(me Contact) *KademliaNetwork {
 	return &KademliaNetwork{
 		table:    NewRoutingTable(me),
@@ -31,6 +33,7 @@ func NewKademliaNetwork(me Contact) *KademliaNetwork {
 }
 
 // LOCAL (THREAD SAFE, BASIC) FUNCTIONS :
+
 //GetIdentity returns the contact information of the host
 func (kademlia *KademliaNetwork) GetIdentity() *Contact {
 	return &kademlia.table.Me
@@ -38,10 +41,13 @@ func (kademlia *KademliaNetwork) GetIdentity() *Contact {
 
 //RegisterContact add if possible the new *contact* to the routing table
 func (kademlia *KademliaNetwork) RegisterContact(contact *Contact) {
-	kademlia.tableMut.Lock()
-	// FIXME the bucket is unlimited atm, to fix directly in it
-	kademlia.table.AddContact(*contact)
-	kademlia.tableMut.Unlock()
+	if !contact.ID.equals(kademlia.GetIdentity().ID) {
+		log.Print("Added new contact :", contact)
+		kademlia.tableMut.Lock()
+		// FIXME the bucket is unlimited atm, to fix directly in it
+		kademlia.table.AddContact(*contact)
+		kademlia.tableMut.Unlock()
+	}
 }
 
 //GetContacts returns the *number* closest contacts to the *searchedID*
@@ -76,4 +82,13 @@ func (kademlia *KademliaNetwork) GetData(fileID *KademliaID) ([]byte, bool) {
 	}
 	kademlia.filesMut.RUnlock()
 	return f.value, exists
+}
+
+func (kademlia *KademliaNetwork) PrintFileState() string {
+	var ret = "["
+	for _, val := range kademlia.files {
+		ret += fmt.Sprintf("%s,", val.value)
+	}
+	ret += "]"
+	return ret
 }

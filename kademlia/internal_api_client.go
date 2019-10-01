@@ -156,6 +156,7 @@ func SendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileI
 func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) error {
 	client, conn, err := connect(target.Address)
 	if err != nil {
+		log.Print("Unable to connect to", target.Address)
 		return err
 	}
 	defer func() {
@@ -175,7 +176,7 @@ func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) err
 		},
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("Unable store onto %s, got error '%s'", target.Address, err.Error())
 	}
 	if !done.Ok {
 		return errors.New("distant node was unable to store data")
