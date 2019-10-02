@@ -44,7 +44,7 @@ if __name__ == "__main__":
         print(response.json())
 
     elif cmd == "join":
-        bashCommand = "go run main.go -join "+url
+        bashCommand = "./main.run "+url
         os.system(bashCommand)
 
     elif cmd == "exit":

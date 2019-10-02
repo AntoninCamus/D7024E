@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +11,12 @@ import (
 )
 
 func main() {
+	// Parse arguments
+	if len(os.Args) > 1 {
+		ip := os.Args[1]
+		fmt.Printf(ip)
+	}
+
 	// Channel creation
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
