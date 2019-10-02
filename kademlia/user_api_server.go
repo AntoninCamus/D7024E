@@ -109,7 +109,6 @@ func store(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwor
 
 	// Store file
 	file := []byte(string(body))
-	log.Print("Trying to store :", file)
 	id, err := StoreData(network, file)
 	if err != nil {
 		http.Error(w, "Error while storing file", http.StatusInternalServerError)

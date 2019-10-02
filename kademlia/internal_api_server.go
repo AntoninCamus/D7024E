@@ -114,8 +114,7 @@ func (s *internalAPIServer) StoreDataCall(_ context.Context, in *StoreDataReques
 	srcContact.Address = in.Src.Address
 	s.kademlia.RegisterContact(srcContact)
 
-	fileID := model.NewKademliaID(in.FileId)
-
+	fileID := model.NewKademliaID(in.Data)
 	err = s.kademlia.SaveData(fileID, in.Data[:])
 	if err != nil {
 		return &StoreDataAnswer{Ok: false}, nil

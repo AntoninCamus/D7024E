@@ -44,7 +44,6 @@ message FindDataAnswer {
 
 message StoreDataRequest{
     Contact src = 1;
-    bytes file_id = 2;
     bytes data = 3;
 }
 
