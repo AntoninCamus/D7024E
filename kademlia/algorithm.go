@@ -163,3 +163,21 @@ func StoreData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID
 
 	return *targetID, nil
 }
+
+func JoinNetwork(net *model.KademliaNetwork, IP string) error {
+	target := model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: IP,
+	}
+
+	foundContacts, err := SendFindContactMessage(&target, net.GetIdentity(), net.GetIdentity().ID, k)
+	if err != nil {
+		return err
+	}
+
+	for _, contact :=  range foundContacts{
+		net.RegisterContact(contact)
+	}
+
+	return nil
+}
