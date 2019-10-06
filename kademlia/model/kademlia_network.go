@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
@@ -91,4 +92,9 @@ func (kademlia *KademliaNetwork) PrintFileState() string {
 	}
 	ret += "]"
 	return ret
+}
+
+func (kademlia *KademliaNetwork) PrintContactState() string {
+	res, _ := json.Marshal(kademlia.table)
+	return string(res)
 }

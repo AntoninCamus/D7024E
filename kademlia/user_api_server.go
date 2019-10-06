@@ -23,8 +23,6 @@ type restService struct {
 
 // StartRestServer start the REST User API
 func StartRestServer(k *model.KademliaNetwork, s chan os.Signal) *http.Server {
-	fmt.Println("Starting server...")
-
 	service := restService{
 		sigChannel:      s,
 		kademliaNetwork: k,
@@ -42,6 +40,7 @@ func StartRestServer(k *model.KademliaNetwork, s chan os.Signal) *http.Server {
 		}
 	}
 	go serving()
+	log.Println("REST server is ready")
 
 	return &srv
 }

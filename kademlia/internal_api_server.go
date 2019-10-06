@@ -126,14 +126,13 @@ func (s *internalAPIServer) StoreDataCall(_ context.Context, in *StoreDataReques
 func StartGrpcServer(kademlia *model.KademliaNetwork) *grpc.Server {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("gRPC server could not start, failed to listen : %v", err)
 	}
 
 	//Creating and registering the server
 	grpcServer := grpc.NewServer()
 	RegisterInternalApiServiceServer(grpcServer, &internalAPIServer{kademlia: kademlia})
 
-	log.Printf("GrpcServer ready ...")
 	serving := func() {
 		//Blocking call
 		err = grpcServer.Serve(lis)
@@ -143,5 +142,7 @@ func StartGrpcServer(kademlia *model.KademliaNetwork) *grpc.Server {
 		}
 	}
 	go serving()
+	log.Printf("gRPC server is ready")
+
 	return grpcServer
 }
