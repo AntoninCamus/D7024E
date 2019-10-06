@@ -39,7 +39,7 @@ if __name__ == "__main__":
             parser.error("No ID specified to find")
 
         print("Calling...")
-        response = requests.get(url+"/kademlia/file", options.id)
+        response = requests.get(url+"/kademlia/file", params={ 'id' : options.id })
         print("Status: ",response.status_code)
         print(response.json())
 

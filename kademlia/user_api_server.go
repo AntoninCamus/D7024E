@@ -99,6 +99,10 @@ func find(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwork
 		return "", err
 	}
 	id := r.Form.Get("id")
+	if len(id) == 0 {
+		http.Error(w, "Request parameters dont contain id", http.StatusBadRequest)
+		return "", err
+	}
 
 	// Retrieve file
 	kademliaID := model.KademliaIDFromString(id)

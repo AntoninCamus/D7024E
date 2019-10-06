@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"math/rand"
 )
 
@@ -27,7 +28,11 @@ func NewKademliaID(data []byte) *KademliaID {
 }
 
 func KademliaIDFromString(data string) *KademliaID {
-	decoded, _ := hex.DecodeString(data)
+	decoded, err := hex.DecodeString(data)
+	if err != nil {
+		//FIXME improve err handling
+		log.Fatal("ERR" + err.Error())
+	}
 
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
