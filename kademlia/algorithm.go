@@ -154,6 +154,9 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 func StoreData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID, err error) {
 	targetID := model.NewKademliaID(data)
 	contacts := append(LookupContact(net, targetID), *net.GetIdentity())
+
+	//fmt.Print("ID is '%s'", targetID.String())
+
 	for _, contact := range contacts {
 		err = SendStoreMessage(&contact, net.GetIdentity(), data)
 		if err != nil {

@@ -46,8 +46,16 @@ func StartRestServer(k *model.KademliaNetwork, s chan os.Signal) *http.Server {
 	return &srv
 }
 
+type storeAnswer struct {
+	FileID string
+}
+
+type findAnswer struct {
+	Data string
+}
+
 func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
-	var answer interface{} // Generic
+	var jsonAnswer []byte // Generic
 
 	if r.Method == "POST" { // Store
 		fileID, err := store(w, r, s.kademliaNetwork)
@@ -55,25 +63,28 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 			log.Printf("API ERROR : %s", err.Error())
 			return
 		}
-		answer = struct{ fileID string }{fileID: fileID}
+		jsonAnswer, err = json.Marshal(storeAnswer{FileID: fileID})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	} else if r.Method == "GET" { // Find
 		data, err := find(w, r, s.kademliaNetwork)
 		if err != nil {
 			log.Printf("API ERROR : %s", err.Error())
 			return
 		}
-		answer = struct{ data string }{data: data}
+		jsonAnswer, err = json.Marshal(findAnswer{Data: data})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Write response
-	js, err := json.Marshal(answer)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(js)
+	fmt.Println(string(jsonAnswer))
+	_, err := w.Write(jsonAnswer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
