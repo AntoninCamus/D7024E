@@ -10,9 +10,9 @@ const k = 20
 
 func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model.Contact {
 	//check if present locally
-	if target == net.GetIdentity().ID {
-		return nil
-	}
+	//if target == net.GetIdentity().ID {
+	//	return nil
+	//}
 
 	closestContacts := net.GetContacts(target, parallelism)
 	contactIn := make(chan model.Contact, parallelism)
@@ -39,34 +39,32 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		}
 	}
 
-	if len(closestContacts) > 0 {
-		// Create workers
-		for i := range closestContacts {
-			contactIn <- closestContacts[i]
-			go run(contactIn, contactOut)
+	// Create workers
+	for i := range closestContacts {
+		contactIn <- closestContacts[i]
+		go run(contactIn, contactOut)
+	}
+
+	numWorkers := len(closestContacts)
+	for numWorkers > 0 {
+		receivedContact := <-contactOut
+		// If closer than one of closestContacts, insert it instead and add it to contactIn
+		// If not insert an empty contact to kill a worker
+		foundCloser := false
+
+		for i, contact := range closestContacts {
+			if receivedContact.Less(&contact) { // Check if closer
+				closestContacts[i] = receivedContact
+
+				contactIn <- receivedContact // Queue up another contact for contacting
+				foundCloser = true
+				break
+			}
 		}
 
-		numWorkers := parallelism
-		for numWorkers > 0 {
-			receivedContact := <-contactOut
-			// If closer than one of closestContacts, insert it instead and add it to contactIn
-			// If not insert an empty contact to kill a worker
-			foundCloser := false
-
-			for i, contact := range closestContacts {
-				if receivedContact.Less(&contact) { // Check if closer
-					closestContacts[i] = receivedContact
-
-					contactIn <- receivedContact // Queue up another contact for contacting
-					foundCloser = true
-					break
-				}
-			}
-
-			if !foundCloser {
-				contactIn <- model.Contact{} // Kill a worker if it couldn't find any closer contacts
-				numWorkers--
-			}
+		if !foundCloser {
+			contactIn <- model.Contact{} // Kill a worker if it couldn't find any closer contacts
+			numWorkers--
 		}
 	}
 
@@ -178,7 +176,7 @@ func JoinNetwork(net *model.KademliaNetwork, IP string) error {
 		return err
 	}
 
-	for _, contact :=  range foundContacts{
+	for _, contact := range foundContacts {
 		net.RegisterContact(contact)
 	}
 
