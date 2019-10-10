@@ -20,7 +20,7 @@ func NewContact(id *KademliaID, address string) Contact {
 
 // CalcDistance calculates the distance to the target and
 // fills the contacts distance field
-func (contact *Contact) calcDistance(target *KademliaID) {
+func (contact *Contact) CalcDistance(target *KademliaID) {
 	contact.distance = contact.ID.calcDistance(target)
 }
 

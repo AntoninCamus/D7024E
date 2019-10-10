@@ -64,6 +64,7 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 		}
 		jsonAnswer, err = json.Marshal(storeAnswer{FileID: fileID})
 		if err != nil {
+			log.Println(10)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -75,6 +76,7 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 		}
 		jsonAnswer, err = json.Marshal(findAnswer{Data: data})
 		if err != nil {
+			log.Println(2)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -120,7 +122,7 @@ func store(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwor
 		http.Error(w, "Error reading request body", http.StatusBadRequest)
 		return "", nil
 	}
-
+	log.Println("API store received")
 	// Store file
 	file := []byte(string(body))
 	id, err := StoreData(network, file)
