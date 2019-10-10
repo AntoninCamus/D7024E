@@ -42,13 +42,14 @@ func (s *internalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 	}
 	srcContact.ID = tmpID
 	srcContact.Address = in.Src.Address
-	s.kademlia.RegisterContact(srcContact)
 
 	searchedID, err = model.KademliaIDFromBytes(in.SearchedContactId)
 	if err != nil {
 		return nil, err
 	}
 	modelContact := s.kademlia.GetContacts(searchedID, int(in.NbNeighbors))
+
+	s.kademlia.RegisterContact(srcContact)
 
 	var newContacts []*Contact
 	for _, c := range modelContact[:] {

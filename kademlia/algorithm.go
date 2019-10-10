@@ -36,7 +36,6 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 						contactOut <- *contact
 					}
 				}
-
 			} else {
 				done = true
 			}
@@ -57,10 +56,16 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		// If not insert an empty contact to kill a worker
 		foundCloser := false
 
-		for i, contact := range closestContacts {
 			receivedContact.CalcDistance(target)
-			if receivedContact.Less(&contact) { // Check if closer
+
+		for i, contact := range closestContacts {
+
+			if receivedContact.ID == contact.ID {
+				break
+			} else if receivedContact.Less(&contact) {
+				// Check if closer
 				closestContacts[i] = receivedContact
+
 				contactIn <- receivedContact // Queue up another contact for contacting
 				foundCloser = true
 				break
@@ -140,7 +145,9 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 			foundCloser := false
 			receivedContact.CalcDistance(fileID)
 			for i, contact := range closestContacts {
-				if receivedContact.Less(&contact) { // Check if closer
+				if receivedContact.ID == contact.ID {
+					break
+				} else if receivedContact.Less(&contact) { // Check if closer
 					closestContacts[i] = receivedContact
 
 					contactIn <- receivedContact // Queue it up
@@ -161,6 +168,7 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 func StoreData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID, err error) {
 	targetID := model.NewKademliaID(data)
 	contacts := append(LookupContact(net, targetID), *net.GetIdentity())
+
 	//fmt.Print("ID is '%s'", targetID.String())
 
 	for _, contact := range contacts {
