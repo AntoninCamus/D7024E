@@ -211,11 +211,25 @@ func JoinNetwork(net *model.KademliaNetwork, IP string) error {
 	return nil
 }
 
-func pushContactInArray(targetId model.KademliaID, receivedContact model.Contact, closestContacts []model.Contact) []model.Contact {
+func pushContactInArray(targetId model.KademliaID, receivedContact model.Contact, closestContacts []model.Contact) ([]model.Contact, bool) {
+	//FIXME PLEASE, IMPROVE ME
+
 	receivedContact.CalcDistance(&targetId)
+
+	sort.Slice(closestContacts, func(i,j int) bool {
+		return closestContacts[i].Less(&closestContacts[j])
+	})
+
 	result := append(closestContacts, receivedContact)
 	sort.Slice(result, func(i,j int) bool {
 		return result[i].Less(&result[j])
 	})
-	return result[:len(closestContacts)]
+
+	result = result[:len(closestContacts)]
+	for i := range closestContacts {
+		if closestContacts[i].ID != result[i].ID {
+			return result, true
+		}
+	}
+	return result, false
 }
