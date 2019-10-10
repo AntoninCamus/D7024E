@@ -42,7 +42,8 @@ func (kademlia *KademliaNetwork) GetIdentity() *Contact {
 
 //RegisterContact add if possible the new *contact* to the routing table
 func (kademlia *KademliaNetwork) RegisterContact(contact *Contact) {
-	if !contact.ID.equals(kademlia.GetIdentity().ID) {
+	contactPresent := kademlia.GetContacts(contact.ID,1)
+	if !contact.ID.equals(kademlia.GetIdentity().ID) && contactPresent != nil {
 		log.Print("Added new contact :", contact)
 		kademlia.tableMut.Lock()
 		// FIXME the bucket is unlimited atm, to fix directly in it

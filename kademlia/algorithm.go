@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"log"
+	"sort"
 )
 
 const parallelism = 3
@@ -36,6 +37,7 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 						contactOut <- *contact
 					}
 				}
+
 			} else {
 				done = true
 			}
@@ -56,7 +58,7 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		// If not insert an empty contact to kill a worker
 		foundCloser := false
 
-			receivedContact.CalcDistance(target)
+		receivedContact.CalcDistance(target)
 
 		for i, contact := range closestContacts {
 
@@ -121,6 +123,17 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 		}
 	}
 
+	// If we are closer than one of the other node found, add ourself to
+	net.GetIdentity().CalcDistance(fileID)
+	for i, contact := range closestContacts {
+		if net.GetIdentity().ID == contact.ID {
+			break
+		} else if net.GetIdentity().Less(&contact) { // Check if closer
+			closestContacts[i] = *net.GetIdentity()
+			break
+		}
+	}
+
 	// Create workers
 	for _, c := range closestContacts {
 		c.CalcDistance(fileID)
@@ -128,7 +141,7 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 		go run(contactIn, contactOut, dataOut)
 	}
 
-	numWorkers := parallelism
+	numWorkers := len(closestContacts)
 	for numWorkers > 0 {
 		select {
 		case receivedData := <-dataOut:
@@ -167,8 +180,7 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 
 func StoreData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID, err error) {
 	targetID := model.NewKademliaID(data)
-	contacts := append(LookupContact(net, targetID), *net.GetIdentity())
-
+	contacts := LookupContact(net, targetID)
 	//fmt.Print("ID is '%s'", targetID.String())
 
 	for _, contact := range contacts {
@@ -197,4 +209,13 @@ func JoinNetwork(net *model.KademliaNetwork, IP string) error {
 	}
 
 	return nil
+}
+
+func pushContactInArray(targetId model.KademliaID, receivedContact model.Contact, closestContacts []model.Contact) []model.Contact {
+	receivedContact.CalcDistance(&targetId)
+	result := append(closestContacts, receivedContact)
+	sort.Slice(result, func(i,j int) bool {
+		return result[i].Less(&result[j])
+	})
+	return result[:len(closestContacts)]
 }
