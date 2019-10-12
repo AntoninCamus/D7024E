@@ -6,7 +6,7 @@ const bucketSize = 20
 // keeps a refrence contact of Me and an array of buckets
 type RoutingTable struct {
 	Me      Contact
-	buckets [IDLength * 8]*bucket
+	buckets [IDLength * 8]*contactBucket
 }
 
 // NewRoutingTable returns a new instance of a RoutingTable

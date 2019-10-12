@@ -4,22 +4,22 @@ import (
 	"container/list"
 )
 
-// bucket definition
+// contactBucket definition
 // contains a List
-type bucket struct {
+type contactBucket struct {
 	list *list.List
 }
 
-// newBucket returns a new instance of a bucket
-func newBucket() *bucket {
-	b := &bucket{}
+// newBucket returns a new instance of a contactBucket
+func newBucket() *contactBucket {
+	b := &contactBucket{}
 	b.list = list.New()
 	return b
 }
 
-// addContact adds the Contact to the front of the bucket
-// or moves it to the front of the bucket if it already existed
-func (bucket *bucket) addContact(contact Contact) {
+// addContact adds the Contact to the front of the contactBucket
+// or moves it to the front of the contactBucket if it already existed
+func (bucket *contactBucket) addContact(contact Contact) {
 	var element *list.Element
 	for e := bucket.list.Front(); e != nil; e = e.Next() {
 		nodeID := e.Value.(Contact).ID
@@ -40,7 +40,7 @@ func (bucket *bucket) addContact(contact Contact) {
 
 // getContactAndCalcDistance returns an array of Contacts where
 // the distance has already been calculated
-func (bucket *bucket) getContactAndCalcDistance(target *KademliaID) []Contact {
+func (bucket *contactBucket) getContactAndCalcDistance(target *KademliaID) []Contact {
 	var contacts []Contact
 
 	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
@@ -52,7 +52,7 @@ func (bucket *bucket) getContactAndCalcDistance(target *KademliaID) []Contact {
 	return contacts
 }
 
-// len return the size of the bucket
-func (bucket *bucket) len() int {
+// len return the maxSize of the contactBucket
+func (bucket *contactBucket) len() int {
 	return bucket.list.Len()
 }
