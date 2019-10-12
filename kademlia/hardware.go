@@ -9,13 +9,11 @@ import (
 	"os"
 )
 
-func getMachineHash() ([]byte, error) {
+func getMachineHash() (hash []byte, err error) {
 	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, err
-	}
 	sha := sha1.Sum([]byte(hostname))
-	return sha[:], nil
+	hash = sha[:]
+	return
 }
 
 func getAddress() (string, error) {

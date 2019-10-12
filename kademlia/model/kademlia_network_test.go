@@ -6,15 +6,14 @@ import (
 	"gotest.tools/assert"
 )
 
-// LOCAL (THREAD SAFE, BASIC) FUNCTIONS :
-func TestKademlia_GetIdentity(t *testing.T) {
+func TestKademliaNetwork_GetIdentity(t *testing.T) {
 	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
 
 	kad := NewKademliaNetwork(me)
-	assert.Equal(t, kad.GetIdentity(), me)
+	assert.Equal(t, kad.GetIdentity().ID, me.ID)
 }
 
-func TestKademlia_SaveAndGetData(t *testing.T) {
+func TestKademliaNetwork_SaveAndGetData(t *testing.T) {
 	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
 	kad := NewKademliaNetwork(me)
 
@@ -32,7 +31,7 @@ func TestKademlia_SaveAndGetData(t *testing.T) {
 	assert.Equal(t, len(contentFound), 0)
 }
 
-func TestKademlia_RegisterAndGetContact(t *testing.T) {
+func TestKademliaNetwork_RegisterAndGetContact(t *testing.T) {
 	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
 	kad := NewKademliaNetwork(me)
 
