@@ -26,6 +26,17 @@ func (routingTable *RoutingTable) AddContact(contact Contact) {
 	b.addContact(contact)
 }
 
+func (routingTable *RoutingTable) ContainContact(id KademliaID) bool {
+	idx := routingTable.getBucketIndex(&id)
+	for e := routingTable.buckets[idx].list.Front(); e != nil; e = e.Next() {
+		s, ok := e.Value.(Contact)
+		if ok && *s.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
 // FindClosestContacts finds the count closest Contacts to the target in the RoutingTable
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {
 	var candidates contactCandidates

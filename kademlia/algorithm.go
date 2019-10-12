@@ -4,21 +4,23 @@ import (
 	"errors"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"log"
-	"sort"
 )
 
-const parallelism = 3
-const k = 20
+const PARALLELISM_RATE = 3 // Alpha
+const BUCKET_SIZE = 20     // K
 
 func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model.Contact {
-	//check if present locally
-	//if target == net.GetIdentity().ID {
-	//	return nil
-	//}
 
-	closestContacts := net.GetContacts(target, parallelism)
-	contactIn := make(chan model.Contact, parallelism)
-	contactOut := make(chan model.Contact, parallelism)
+	contactIn := make(chan model.Contact, PARALLELISM_RATE)
+	contactOut := make(chan model.Contact, PARALLELISM_RATE)
+
+	// Prepare the sorter of contacts
+	localClosestContacts := net.GetContacts(target, PARALLELISM_RATE)
+	sorterClosestContacts := model.NewSorter(*target, PARALLELISM_RATE)
+	sorterClosestContacts.InsertContact(*net.GetIdentity())
+	for _, c := range localClosestContacts {
+		sorterClosestContacts.InsertContact(c)
+	}
 
 	// Worker routine
 	run := func(contactIn chan model.Contact, contactOut chan model.Contact) {
@@ -26,7 +28,7 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		for !done {
 			c := <-contactIn //contact target
 			if c != (model.Contact{}) {
-				contacts, err := SendFindContactMessage(&c, net.GetIdentity(), target, k)
+				contacts, err := SendFindContactMessage(&c, net.GetIdentity(), target, BUCKET_SIZE)
 				//should this check whether target is you?
 				if err != nil {
 					log.Println("Error looking up contact")
@@ -44,43 +46,30 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		}
 	}
 
-	// Create workers
-	for _, c := range closestContacts {
+	// Create workers with each of the local found closest contacts
+	for _, c := range localClosestContacts {
 		c.CalcDistance(target)
 		contactIn <- c
 		go run(contactIn, contactOut)
 	}
 
-	numWorkers := len(closestContacts)
+	numWorkers := len(localClosestContacts)
 	for numWorkers > 0 {
 		receivedContact := <-contactOut
-		// If closer than one of closestContacts, insert it instead and add it to contactIn
-		// If not insert an empty contact to kill a worker
-		foundCloser := false
-
-		receivedContact.CalcDistance(target)
-
-		for i, contact := range closestContacts {
-
-			if receivedContact.ID == contact.ID {
-				break
-			} else if receivedContact.Less(&contact) {
-				// Check if closer
-				closestContacts[i] = receivedContact
-
-				contactIn <- receivedContact // Queue up another contact for contacting
-				foundCloser = true
-				break
-			}
-		}
-
-		if !foundCloser {
-			contactIn <- model.Contact{} // Kill a worker if it couldn't find any closer contacts
+		foundCloser := sorterClosestContacts.InsertContact(receivedContact)
+		if foundCloser {
+			// If we found a closer contact, we should continue searching
+			// We queue up the new found contact to the algorithm
+			contactIn <- receivedContact
+		} else {
+			// If we did not, we should stop searching
+			// We send a empty contact to kill a worker
+			contactIn <- model.Contact{}
 			numWorkers--
 		}
 	}
 
-	return closestContacts
+	return sorterClosestContacts.GetContacts()
 }
 
 func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, error) {
@@ -91,10 +80,17 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 		return data, nil
 	}
 
-	closestContacts := net.GetContacts(fileID, parallelism)
-	contactIn := make(chan model.Contact, parallelism)
-	contactOut := make(chan model.Contact, parallelism)
-	dataOut := make(chan []byte, parallelism)
+	contactIn := make(chan model.Contact, PARALLELISM_RATE)
+	contactOut := make(chan model.Contact, PARALLELISM_RATE)
+	dataOut := make(chan []byte, PARALLELISM_RATE)
+
+	// Prepare the sorter of contacts
+	localClosestContacts := net.GetContacts(fileID, PARALLELISM_RATE)
+	sorterClosestContacts := model.NewSorter(*fileID, PARALLELISM_RATE)
+	sorterClosestContacts.InsertContact(*net.GetIdentity())
+	for _, c := range localClosestContacts {
+		sorterClosestContacts.InsertContact(c)
+	}
 
 	// Worker routine
 	run := func(contactIn chan model.Contact, contactOut chan model.Contact, dataOut chan []byte) {
@@ -123,53 +119,35 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 		}
 	}
 
-	// If we are closer than one of the other node found, add ourself to
-	net.GetIdentity().CalcDistance(fileID)
-	for i, contact := range closestContacts {
-		if net.GetIdentity().ID == contact.ID {
-			break
-		} else if net.GetIdentity().Less(&contact) { // Check if closer
-			closestContacts[i] = *net.GetIdentity()
-			break
-		}
-	}
-
-	// Create workers
-	for _, c := range closestContacts {
+	// Create workers with each of the local found closest contacts
+	for _, c := range localClosestContacts {
 		c.CalcDistance(fileID)
 		contactIn <- c
 		go run(contactIn, contactOut, dataOut)
 	}
 
-	numWorkers := len(closestContacts)
+	numWorkers := len(localClosestContacts)
 	for numWorkers > 0 {
 		select {
 		case receivedData := <-dataOut:
-			// Send special value to kill all workers
-			for i := 0; i < parallelism; i++ {
+			// If we found data, kill all the workers
+			// Insert empty contacts to kill each worker
+			for i := 0; i < numWorkers; i++ {
 				contactIn <- model.Contact{}
 			}
-
 			return receivedData, nil
 
 		case receivedContact := <-contactOut:
-			// If closer than one of closestContacts, insert it instead and add it to contactIn
-			// If not insert an empty contact to kill a worker
-			foundCloser := false
-			receivedContact.CalcDistance(fileID)
-			for i, contact := range closestContacts {
-				if receivedContact.ID == contact.ID {
-					break
-				} else if receivedContact.Less(&contact) { // Check if closer
-					closestContacts[i] = receivedContact
-
-					contactIn <- receivedContact // Queue it up
-					foundCloser = true
-					break
-				}
-			}
-			if !foundCloser {
-				contactIn <- model.Contact{} // Kill a worker
+			// Else we receive a new contact, in this case act as LookupContact
+			foundCloser := sorterClosestContacts.InsertContact(receivedContact)
+			if foundCloser {
+				// If we found a closer contact, we should continue searching
+				// We queue up the new found contact to the algorithm
+				contactIn <- receivedContact
+			} else {
+				// If we did not, we should stop searching
+				// We send a empty contact to kill a worker
+				contactIn <- model.Contact{}
 				numWorkers--
 			}
 		}
@@ -199,7 +177,7 @@ func JoinNetwork(net *model.KademliaNetwork, IP string) error {
 		Address: IP,
 	}
 
-	foundContacts, err := SendFindContactMessage(&target, net.GetIdentity(), net.GetIdentity().ID, k)
+	foundContacts, err := SendFindContactMessage(&target, net.GetIdentity(), net.GetIdentity().ID, BUCKET_SIZE)
 	if err != nil {
 		return err
 	}
@@ -209,27 +187,4 @@ func JoinNetwork(net *model.KademliaNetwork, IP string) error {
 	}
 
 	return nil
-}
-
-func pushContactInArray(targetId model.KademliaID, receivedContact model.Contact, closestContacts []model.Contact) ([]model.Contact, bool) {
-	//FIXME PLEASE, IMPROVE ME
-
-	receivedContact.CalcDistance(&targetId)
-
-	sort.Slice(closestContacts, func(i,j int) bool {
-		return closestContacts[i].Less(&closestContacts[j])
-	})
-
-	result := append(closestContacts, receivedContact)
-	sort.Slice(result, func(i,j int) bool {
-		return result[i].Less(&result[j])
-	})
-
-	result = result[:len(closestContacts)]
-	for i := range closestContacts {
-		if closestContacts[i].ID != result[i].ID {
-			return result, true
-		}
-	}
-	return result, false
 }

@@ -42,14 +42,13 @@ func (kademlia *KademliaNetwork) GetIdentity() *Contact {
 
 //RegisterContact add if possible the new *contact* to the routing table
 func (kademlia *KademliaNetwork) RegisterContact(contact *Contact) {
-	closestContact := kademlia.GetContacts(contact.ID,1)
-
-	if !contact.ID.equals(kademlia.GetIdentity().ID) && (closestContact == nil || closestContact[0].ID != contact.ID) {
+	if !contact.ID.equals(kademlia.GetIdentity().ID) && !kademlia.table.ContainContact(*contact.ID) {
 		log.Print("Added new contact :", contact)
 		kademlia.tableMut.Lock()
 		// FIXME the bucket is unlimited atm, to fix directly in it
 		kademlia.table.AddContact(*contact)
 		kademlia.tableMut.Unlock()
+		log.Print("Contacts known are  :", kademlia.ContactStateString())
 	}
 }
 
@@ -87,7 +86,7 @@ func (kademlia *KademliaNetwork) GetData(fileID *KademliaID) ([]byte, bool) {
 	return f.value, exists
 }
 
-func (kademlia *KademliaNetwork) PrintFileState() string {
+func (kademlia *KademliaNetwork) FileStateString() string {
 	var ret = "["
 	for _, val := range kademlia.files {
 		ret += fmt.Sprintf("%s,", val.value)
@@ -96,7 +95,7 @@ func (kademlia *KademliaNetwork) PrintFileState() string {
 	return ret
 }
 
-func (kademlia *KademliaNetwork) PrintContactState() string {
+func (kademlia *KademliaNetwork) ContactStateString() string {
 	res, _ := json.Marshal(kademlia.table)
 	return string(res)
 }

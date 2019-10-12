@@ -26,7 +26,7 @@ func main() {
 			log.Printf("Failed with error : %s", err)
 			os.Exit(1)
 		} else {
-			log.Printf("Succeed to join the network, got contacts : %s", k.PrintContactState())
+			log.Printf("Succeed to join the network, got contacts : %s", k.ContactStateString())
 		}
 	} else {
 		log.Println("Starting the node as first node.")

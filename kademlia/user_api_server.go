@@ -130,7 +130,7 @@ func store(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwor
 		http.Error(w, "Error while storing file", http.StatusInternalServerError)
 		return "", err
 	}
-	log.Print("Store successful, new state is :", network.PrintFileState())
+	log.Print("Store successful, new state is :", network.FileStateString())
 	return id.String(), nil
 }
 
