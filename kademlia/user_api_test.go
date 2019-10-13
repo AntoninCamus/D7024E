@@ -19,13 +19,11 @@ func Test_userAPI(t *testing.T) {
 	StartGrpcServer(tk)
 	StartRestServer(tk, sigChan)
 
-
 	// Store
 	cmd := exec.Command("../client.py", "store", "--file=TEST", "localhost:8080")
 	stdOut, _ := cmd.CombinedOutput()
 
-	assert.Equal(t, string(stdOut)[11:23],"Status:  200")
-
+	assert.Equal(t, string(stdOut)[11:23], "Status:  200")
 
 	// Find
 	id := model.NewKademliaID([]byte("TEST"))
@@ -40,10 +38,9 @@ func Test_userAPI(t *testing.T) {
 
 	assert.Equal(t, string(stdOut)[11:23], "Status:  404")
 
-
 	// Exit
 	cmd = exec.Command("../client.py", "exit", "localhost:8080")
 	stdOut, _ = cmd.CombinedOutput()
 
-	assert.Equal(t, string(stdOut)[11:23],"Status:  200")
+	assert.Equal(t, string(stdOut)[11:23], "Status:  200")
 }

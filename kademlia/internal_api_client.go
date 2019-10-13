@@ -26,8 +26,8 @@ func connect(address string) (InternalApiServiceClient, *grpc.ClientConn, error)
 	return client, conn, nil
 }
 
-// SendPingMessage ping the provided contact and return if it is present or not.
-func SendPingMessage(target *model.Contact) bool {
+// sendPingMessage ping the provided contact and return if it is present or not.
+func sendPingMessage(target *model.Contact) bool {
 	// Open gRPC connection
 	client, conn, err := connect(target.Address)
 	if err != nil {
@@ -35,7 +35,7 @@ func SendPingMessage(target *model.Contact) bool {
 		return false
 	}
 	defer func() {
-		if err := conn.Close(); err != nil {
+		if err = conn.Close(); err != nil {
 			log.Print(err)
 		}
 	}()
@@ -52,15 +52,15 @@ func SendPingMessage(target *model.Contact) bool {
 	return len(ans.GetReceiverKademliaId()) == model.IDLength
 }
 
-// SendFindContactMessage ask to the provided node for the nbNeighbors closest neighbors of the searchedContactID provided, and returns them.
-func SendFindContactMessage(target *model.Contact, me *model.Contact, searchedContactID *model.KademliaID, nbNeighbors int) (contacts []*model.Contact, err error) {
+// sendFindContactMessage ask to the provided node for the nbNeighbors closest neighbors of the searchedContactID provided, and returns them.
+func sendFindContactMessage(target *model.Contact, me *model.Contact, searchedContactID *model.KademliaID, nbNeighbors int) (contacts []*model.Contact, err error) {
 	// Open gRPC connection
 	client, conn, err := connect(target.Address)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
-		if err := conn.Close(); err != nil {
+		if err = conn.Close(); err != nil {
 			log.Print(err)
 		}
 	}()
@@ -97,9 +97,9 @@ func SendFindContactMessage(target *model.Contact, me *model.Contact, searchedCo
 	return modelContacts, nil
 }
 
-// SendFindDataMessage ask to the provided node for the file identified by the provided fileID, and returns it.
+// sendFindDataMessage ask to the provided node for the file identified by the provided fileID, and returns it.
 // If data was not found it act as SendFindContactMessage.
-func SendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileID *model.KademliaID, nbNeighbors int) ([]byte, []*model.Contact, error) {
+func sendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileID *model.KademliaID, nbNeighbors int) ([]byte, []*model.Contact, error) {
 	// Open gRPC connection
 	client, conn, err := connect(target.Address)
 	if err != nil {
@@ -152,8 +152,8 @@ func SendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileI
 	}
 }
 
-// SendStoreMessage ask to the provided node to store the file, and returns the corresponding ID.
-func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) error {
+// sendStoreMessage ask to the provided node to store the file, and returns the corresponding ID.
+func sendStoreMessage(target *model.Contact, me *model.Contact, data []byte) error {
 	client, conn, err := connect(target.Address)
 	if err != nil {
 		log.Print("Unable to connect to", target.Address)
@@ -176,7 +176,7 @@ func SendStoreMessage(target *model.Contact, me *model.Contact, data []byte) err
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("Unable store onto %s, got error '%s'", target.Address, err.Error())
+		return fmt.Errorf("unable store onto %s, got error '%s'", target.Address, err.Error())
 	}
 	if !done.Ok {
 		return errors.New("distant node was unable to store data")

@@ -11,7 +11,7 @@ func TestContactSorter_InsertContact_ReturnsTrueWhenEmpty(t *testing.T) {
 
 	// InsertContact should return true the 3 first times
 	for i := 0; i < 3; i++ {
-		res := s.InsertContact(NewContact(NewRandomKademliaID(), ""))
+		res := s.InsertContact(newContact(NewRandomKademliaID(), ""))
 		assert.Assert(t, res)
 	}
 }
@@ -20,7 +20,7 @@ func TestContactSorter_InsertContact_ReturnsFalseWhenAlreadyPresent(t *testing.T
 	id := NewRandomKademliaID()
 	s := NewSorter(*id, 3)
 
-	c := NewContact(NewRandomKademliaID(), "")
+	c := newContact(NewRandomKademliaID(), "")
 	assert.Assert(t, s.InsertContact(c))
 	// Inserting two time the same should return false
 	assert.Assert(t, !s.InsertContact(c))
@@ -33,15 +33,15 @@ func TestContactSorter_InsertContact_InsertOnlyGreaterValues(t *testing.T) {
 
 	// Fill the array
 	for i := 0; i < SIZE; i++ {
-		s.InsertContact(NewContact(NewRandomKademliaID(), ""))
+		s.InsertContact(newContact(NewRandomKademliaID(), ""))
 	}
 
 	// Then add new ones
 	for i := 0; i < SIZE; i++ {
-		newContact := NewContact(NewRandomKademliaID(), "")
+		contact := newContact(NewRandomKademliaID(), "")
 
 		// Compute expected result
-		newContact.CalcDistance(id)
+		contact.CalcDistance(id)
 		contacts := s.GetContacts()
 		for _, c := range contacts {
 			c.CalcDistance(id)
@@ -50,7 +50,7 @@ func TestContactSorter_InsertContact_InsertOnlyGreaterValues(t *testing.T) {
 		// Expected bool return
 		expectedRes := false
 		for _, c := range contacts {
-			if c.Less(&newContact) {
+			if c.less(&contact) {
 				expectedRes = true
 				break
 			}
@@ -58,18 +58,18 @@ func TestContactSorter_InsertContact_InsertOnlyGreaterValues(t *testing.T) {
 
 		// Expected replaced contact position
 		expectedReplacedContact := -1
-		for i, c := range contacts {
-			if expectedReplacedContact == -1 && c.Less(&newContact) {
-				expectedReplacedContact = i
-			} else if expectedReplacedContact != -1 && c.Less(&contacts[expectedReplacedContact]) {
-				expectedReplacedContact = i
+		for j, c := range contacts {
+			if expectedReplacedContact == -1 && c.less(&contact) {
+				expectedReplacedContact = j
+			} else if expectedReplacedContact != -1 && c.less(&contacts[expectedReplacedContact]) {
+				expectedReplacedContact = j
 			}
 		}
 
 		// Verify expected results
-		assert.Equal(t, s.InsertContact(newContact), expectedRes)
+		assert.Equal(t, s.InsertContact(contact), expectedRes)
 		if expectedReplacedContact != -1 {
-			assert.Equal(t, s.GetContacts()[expectedReplacedContact].ID, newContact.ID)
+			assert.Equal(t, s.GetContacts()[expectedReplacedContact].ID, contact.ID)
 		}
 	}
 }

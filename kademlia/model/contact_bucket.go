@@ -31,7 +31,7 @@ func (bucket *contactBucket) addContact(contact Contact) {
 	}
 
 	if element == nil {
-		if bucket.list.Len() < bucketSize {
+		if bucket.list.Len() < BucketSize {
 			bucket.list.PushFront(contact)
 		}
 	} else {
@@ -58,7 +58,7 @@ func (bucket *contactBucket) len() int {
 	return bucket.list.Len()
 }
 
-func (bucket *contactBucket) String() interface{} {
+func (bucket *contactBucket) string() interface{} {
 	var ret = "["
 	for e := bucket.list.Back(); e != nil; e = e.Prev() {
 		c := e.Value.(Contact)

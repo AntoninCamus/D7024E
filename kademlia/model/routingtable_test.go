@@ -20,19 +20,19 @@ func TestRoutingTable_ShouldReturnOrdered(t *testing.T) {
 		searchedID,
 	}
 
-	rt := NewRoutingTable(NewContact(KademliaIDFromString(ids[0]), "localhost:8000"))
+	rt := newRoutingTable(newContact(KademliaIDFromString(ids[0]), "localhost:8000"))
 
 	for i, c := range ids {
-		rt.AddContact(NewContact(KademliaIDFromString(c), fmt.Sprintf("localhost:800%d", i+1)))
+		rt.addContact(newContact(KademliaIDFromString(c), fmt.Sprintf("localhost:800%d", i+1)))
 	}
 
-	contacts := rt.FindClosestContacts(KademliaIDFromString(searchedID), 20)
+	contacts := rt.findClosestContacts(KademliaIDFromString(searchedID), 20)
 	sort.Slice(ids, func(i, j int) bool {
-		ci := NewContact(KademliaIDFromString(ids[i]), "localhost:8000")
-		cj := NewContact(KademliaIDFromString(ids[j]), "localhost:8000")
+		ci := newContact(KademliaIDFromString(ids[i]), "localhost:8000")
+		cj := newContact(KademliaIDFromString(ids[j]), "localhost:8000")
 		ci.CalcDistance(KademliaIDFromString(searchedID))
 		cj.CalcDistance(KademliaIDFromString(searchedID))
-		return ci.Less(&cj)
+		return ci.less(&cj)
 	})
 
 	for i := range contacts {

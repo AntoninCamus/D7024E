@@ -1,14 +1,14 @@
 package model
 
 // ContactSorter keep only a certain number of contacts, and only keep the closest to the target
-type ContactSorter struct {
+type contactSorter struct {
 	target   KademliaID
 	contacts []Contact
 }
 
-// newBucket returns a new instance of a ContactSorter, with a maximum of *maxSize*
-func NewSorter(target KademliaID, size int) *ContactSorter {
-	return &ContactSorter{
+// NewSorter returns a new instance of a ContactSorter, with a maximum of *maxSize*
+func NewSorter(target KademliaID, size int) *contactSorter {
+	return &contactSorter{
 		target:   target,
 		contacts: make([]Contact, size),
 	}
@@ -17,7 +17,7 @@ func NewSorter(target KademliaID, size int) *ContactSorter {
 // InsertContact insert the *contact* into the sorter.
 // If the sorter is full, keep only the closer contacts.
 // Returns if the sorter state was changed or not.
-func (s *ContactSorter) InsertContact(contact Contact) bool {
+func (s *contactSorter) InsertContact(contact Contact) bool {
 	// We start by calculating the distance of the target
 	contact.CalcDistance(&s.target)
 
@@ -36,10 +36,10 @@ func (s *ContactSorter) InsertContact(contact Contact) bool {
 			break
 		} else {
 			// If the current contact is further than the current furthest replace it and set the position
-			if further != -1 && c.Less(&s.contacts[further]) {
+			if further != -1 && c.less(&s.contacts[further]) {
 				// If further != -1 we check the contacts list
 				further = i
-			} else if further == -1 && c.Less(&contact) {
+			} else if further == -1 && c.less(&contact) {
 				// Else it means that the worse is the new one
 				further = i
 			}
@@ -55,6 +55,6 @@ func (s *ContactSorter) InsertContact(contact Contact) bool {
 }
 
 // GetContacts return the full internal state of the sorter.
-func (s *ContactSorter) GetContacts() []Contact {
+func (s *contactSorter) GetContacts() []Contact {
 	return s.contacts
 }

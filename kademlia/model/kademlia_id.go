@@ -27,6 +27,7 @@ func NewKademliaID(data []byte) *KademliaID {
 	return &newKademliaID
 }
 
+//KademliaIDFromString convert an string ID into a KademliaID
 func KademliaIDFromString(data string) *KademliaID {
 	decoded, err := hex.DecodeString(data)
 	if err != nil {

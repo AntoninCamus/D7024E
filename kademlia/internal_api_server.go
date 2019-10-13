@@ -109,7 +109,7 @@ func (s *internalAPIServer) StoreDataCall(_ context.Context, in *StoreDataReques
 
 	tmpID, err := model.KademliaIDFromBytes(in.Src.ID)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid sender ID : %s", err)
+		return nil, fmt.Errorf("invalid sender ID : %s", err)
 	}
 	srcContact.ID = tmpID
 	srcContact.Address = in.Src.Address

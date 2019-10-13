@@ -22,9 +22,9 @@ func getAddress() (string, error) {
 		return "", err
 	}
 	for _, i := range ifaces {
-		addrs, err := i.Addrs()
-		if err != nil {
-			return "", err
+		addrs, err2 := i.Addrs()
+		if err2 != nil {
+			return "", err2
 		}
 		for _, addr := range addrs {
 			var ip net.IP

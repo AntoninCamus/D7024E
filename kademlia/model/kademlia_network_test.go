@@ -8,7 +8,7 @@ import (
 
 // LOCAL (THREAD SAFE, BASIC) FUNCTIONS :
 func TestKademlia_GetIdentity(t *testing.T) {
-	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
+	me := newContact(NewRandomKademliaID(), "127.0.0.1")
 
 	kad := NewKademliaNetwork(me)
 	assert.Equal(t, kad.GetIdentity().ID, me.ID)
@@ -16,7 +16,7 @@ func TestKademlia_GetIdentity(t *testing.T) {
 }
 
 func TestKademlia_SaveAndGetData(t *testing.T) {
-	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
+	me := newContact(NewRandomKademliaID(), "127.0.0.1")
 	kad := NewKademliaNetwork(me)
 
 	fileID := NewRandomKademliaID()
@@ -34,14 +34,14 @@ func TestKademlia_SaveAndGetData(t *testing.T) {
 }
 
 func TestKademlia_RegisterAndGetContact(t *testing.T) {
-	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
+	me := newContact(NewRandomKademliaID(), "127.0.0.1")
 	kad := NewKademliaNetwork(me)
 
 	emptyContacts := kad.GetContacts(me.ID, 10)
 	assert.Equal(t, len(emptyContacts), 0)
 
-	c1 := NewContact(NewRandomKademliaID(), "127.0.1.1")
-	c2 := NewContact(NewRandomKademliaID(), "127.0.2.1")
+	c1 := newContact(NewRandomKademliaID(), "127.0.1.1")
+	c2 := newContact(NewRandomKademliaID(), "127.0.2.1")
 	kad.RegisterContact(&c1)
 	kad.RegisterContact(&c2)
 	contacts := kad.GetContacts(me.ID, 10)

@@ -19,11 +19,11 @@ func Test_Ping(t *testing.T) {
 		Address: "127.0.0.1",
 	}
 
-	p1 := SendPingMessage(&me)
+	p1 := sendPingMessage(&me)
 	assert.Equal(t, p1, true)
 	s.GracefulStop()
 
-	p2 := SendPingMessage(&me)
+	p2 := sendPingMessage(&me)
 	assert.Equal(t, p2, false)
 }
 
@@ -39,15 +39,14 @@ func Test_FindContact(t *testing.T) {
 		Address: "127.0.0.1",
 	}
 
-	_, err := SendFindContactMessage(&me, &me, model.NewRandomKademliaID(), 0)
+	_, err := sendFindContactMessage(&me, &me, model.NewRandomKademliaID(), 0)
 	assert.NilError(t, err)
 
 	s.GracefulStop()
 
-	_, err = SendFindContactMessage(&me, &me, model.NewRandomKademliaID(), 0)
+	_, err = sendFindContactMessage(&me, &me, model.NewRandomKademliaID(), 0)
 	assert.Error(t, err, "context deadline exceeded")
 }
-
 
 func Test_StoreDataCall(t *testing.T) {
 	tk := model.NewKademliaNetwork(model.Contact{
@@ -61,12 +60,12 @@ func Test_StoreDataCall(t *testing.T) {
 		Address: "127.0.0.1",
 	}
 
-	err := SendStoreMessage(&me, &me,[]byte("TEST1"))
+	err := sendStoreMessage(&me, &me, []byte("TEST1"))
 	assert.NilError(t, err)
 
 	s.GracefulStop()
 
-	err = SendStoreMessage(&me, &me,[]byte("TEST2"))
+	err = sendStoreMessage(&me, &me, []byte("TEST2"))
 	assert.Error(t, err, "context deadline exceeded")
 }
 
@@ -85,8 +84,10 @@ func Test_FindDataCall(t *testing.T) {
 	data := []byte("TEST")
 	id := model.NewKademliaID(data)
 
-	SendStoreMessage(&me, &me,data)
-	_, _, err := SendFindDataMessage(&me, &me, id,1)
+	err := sendStoreMessage(&me, &me, data)
+	assert.NilError(t, err)
+
+	_, _, err = sendFindDataMessage(&me, &me, id, 1)
 
 	assert.NilError(t, err)
 }

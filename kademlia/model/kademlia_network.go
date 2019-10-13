@@ -9,7 +9,7 @@ import (
 
 //KademliaNetwork is the kademlia of the KademliaNetwork DHT on which the algorithm works
 type KademliaNetwork struct {
-	table    *RoutingTable
+	table    *routingTable
 	files    map[KademliaID]file
 	tableMut *sync.RWMutex
 	filesMut *sync.RWMutex
@@ -25,7 +25,7 @@ type file struct {
 //NewKademliaNetwork create a new kademlia object
 func NewKademliaNetwork(me Contact) *KademliaNetwork {
 	return &KademliaNetwork{
-		table:    NewRoutingTable(me),
+		table:    newRoutingTable(me),
 		files:    make(map[KademliaID]file),
 		tableMut: &sync.RWMutex{},
 		filesMut: &sync.RWMutex{},
@@ -36,12 +36,13 @@ func NewKademliaNetwork(me Contact) *KademliaNetwork {
 
 //RegisterContact add if possible the new *contact* to the routing table
 func (kademlia *KademliaNetwork) RegisterContact(contact *Contact) {
-	if !contact.ID.equals(kademlia.GetIdentity().ID) && !kademlia.table.ContainContact(*contact.ID) {
-		log.Print("Added new contact :", contact)
+	if !contact.ID.equals(kademlia.GetIdentity().ID) {
 		kademlia.tableMut.Lock()
-		kademlia.table.AddContact(*contact)
+		kademlia.table.addContact(*contact)
 		kademlia.tableMut.Unlock()
-		log.Print("Contacts known are  :", kademlia.ContactStateString())
+		if !!kademlia.table.containContact(*contact.ID) {
+			log.Printf("Added new contact %s,\n new state is %s", contact.String(), kademlia.ContactStateString())
+		}
 	}
 }
 
@@ -49,7 +50,7 @@ func (kademlia *KademliaNetwork) RegisterContact(contact *Contact) {
 func (kademlia *KademliaNetwork) GetContacts(searchedID *KademliaID, number int) []Contact {
 	kademlia.tableMut.RLock()
 	defer kademlia.tableMut.RUnlock()
-	return kademlia.table.FindClosestContacts(searchedID, number)
+	return kademlia.table.findClosestContacts(searchedID, number)
 }
 
 //SaveData save the content of the file *content* under the *fileID*
@@ -81,13 +82,15 @@ func (kademlia *KademliaNetwork) GetData(fileID *KademliaID) ([]byte, bool) {
 
 //GetIdentity returns the contact information of the host
 func (kademlia *KademliaNetwork) GetIdentity() Contact {
-	return kademlia.table.GetMe()
+	return kademlia.table.getMe()
 }
 
+//ContactStateString return the routing table internal state on the form of a string
 func (kademlia *KademliaNetwork) ContactStateString() string {
 	return kademlia.table.String()
 }
 
+//FileStateString return the files table state on the form of a string
 func (kademlia *KademliaNetwork) FileStateString() string {
 	var ret = "["
 	for _, val := range kademlia.files {

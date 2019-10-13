@@ -13,8 +13,8 @@ type Contact struct {
 	distance *KademliaID
 }
 
-// NewContact returns a new instance of a Contact
-func NewContact(id *KademliaID, address string) Contact {
+// newContact returns a new instance of a Contact
+func newContact(id *KademliaID, address string) Contact {
 	return Contact{id, address, nil}
 }
 
@@ -24,8 +24,8 @@ func (contact *Contact) CalcDistance(target *KademliaID) {
 	contact.distance = contact.ID.calcDistance(target)
 }
 
-// Less returns true if contact.distance < otherContact.distance
-func (contact *Contact) Less(otherContact *Contact) bool {
+// less returns true if contact.distance < otherContact.distance
+func (contact *Contact) less(otherContact *Contact) bool {
 	return contact.distance.less(otherContact.distance)
 }
 
@@ -69,5 +69,5 @@ func (candidates *contactCandidates) Swap(i, j int) {
 // Less returns true if the Contact at index i is smaller than
 // the Contact at index j
 func (candidates *contactCandidates) Less(i, j int) bool {
-	return candidates.contacts[i].Less(&candidates.contacts[j])
+	return candidates.contacts[i].less(&candidates.contacts[j])
 }

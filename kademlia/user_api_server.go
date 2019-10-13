@@ -107,7 +107,7 @@ func find(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwork
 
 	// Retrieve file
 	kademliaID := model.KademliaIDFromString(id)
-	file, err := LookupData(network, kademliaID)
+	file, err := lookupData(network, kademliaID)
 	if err != nil {
 		http.Error(w, "Error while retrieving file", http.StatusNotFound)
 		return "", err
@@ -125,7 +125,7 @@ func store(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwor
 	log.Println("API store received")
 	// Store file
 	file := []byte(string(body))
-	id, err := StoreData(network, file)
+	id, err := storeData(network, file)
 	if err != nil {
 		http.Error(w, "Error while storing file", http.StatusInternalServerError)
 		return "", err
