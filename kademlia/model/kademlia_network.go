@@ -1,7 +1,6 @@
 package model
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
@@ -35,17 +34,11 @@ func NewKademliaNetwork(me Contact) *KademliaNetwork {
 
 // LOCAL (THREAD SAFE, BASIC) FUNCTIONS :
 
-//GetIdentity returns the contact information of the host
-func (kademlia *KademliaNetwork) GetIdentity() *Contact {
-	return &kademlia.table.Me
-}
-
 //RegisterContact add if possible the new *contact* to the routing table
 func (kademlia *KademliaNetwork) RegisterContact(contact *Contact) {
 	if !contact.ID.equals(kademlia.GetIdentity().ID) && !kademlia.table.ContainContact(*contact.ID) {
 		log.Print("Added new contact :", contact)
 		kademlia.tableMut.Lock()
-		// FIXME the bucket is unlimited atm, to fix directly in it
 		kademlia.table.AddContact(*contact)
 		kademlia.tableMut.Unlock()
 		log.Print("Contacts known are  :", kademlia.ContactStateString())
@@ -86,6 +79,15 @@ func (kademlia *KademliaNetwork) GetData(fileID *KademliaID) ([]byte, bool) {
 	return f.value, exists
 }
 
+//GetIdentity returns the contact information of the host
+func (kademlia *KademliaNetwork) GetIdentity() Contact {
+	return kademlia.table.GetMe()
+}
+
+func (kademlia *KademliaNetwork) ContactStateString() string {
+	return kademlia.table.String()
+}
+
 func (kademlia *KademliaNetwork) FileStateString() string {
 	var ret = "["
 	for _, val := range kademlia.files {
@@ -93,9 +95,4 @@ func (kademlia *KademliaNetwork) FileStateString() string {
 	}
 	ret += "]"
 	return ret
-}
-
-func (kademlia *KademliaNetwork) ContactStateString() string {
-	res, _ := json.Marshal(kademlia.table)
-	return string(res)
 }

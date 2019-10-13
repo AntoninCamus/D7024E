@@ -30,7 +30,6 @@ func NewKademliaID(data []byte) *KademliaID {
 func KademliaIDFromString(data string) *KademliaID {
 	decoded, err := hex.DecodeString(data)
 	if err != nil {
-		//FIXME improve err handling
 		log.Fatal("ERR" + err.Error())
 	}
 

@@ -1,11 +1,15 @@
 package model
 
-const bucketSize = 20
+import (
+	"fmt"
+)
+
+const bucketSize = 3
 
 // RoutingTable definition
-// keeps a refrence contact of Me and an array of buckets
+// keeps a refrence contact of me and an array of buckets
 type RoutingTable struct {
-	Me      Contact
+	me      Contact
 	buckets [IDLength * 8]*contactBucket
 }
 
@@ -15,7 +19,7 @@ func NewRoutingTable(me Contact) *RoutingTable {
 	for i := 0; i < IDLength*8; i++ {
 		routingTable.buckets[i] = newBucket()
 	}
-	routingTable.Me = me
+	routingTable.me = me
 	return routingTable
 }
 
@@ -67,7 +71,7 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count 
 
 // getBucketIndex get the correct Bucket index for the KademliaID
 func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
-	distance := id.calcDistance(routingTable.Me.ID)
+	distance := id.calcDistance(routingTable.me.ID)
 	for i := 0; i < IDLength; i++ {
 		for j := 0; j < 8; j++ {
 			if (distance[i]>>uint8(7-j))&0x1 != 0 {
@@ -77,4 +81,26 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 	}
 
 	return IDLength*8 - 1
+}
+
+func (routingTable *RoutingTable) GetMe() Contact {
+	return routingTable.me
+}
+
+func (routingTable *RoutingTable) String() string {
+	var skip = false
+	var ret = "["
+	for _, val := range routingTable.buckets {
+		if val.len() > 0 {
+			ret += fmt.Sprintf("%s,", val.String())
+			skip = false
+		} else {
+			if !skip {
+				ret += "..."
+				skip = true
+			}
+		}
+	}
+	ret += "]"
+	return ret
 }

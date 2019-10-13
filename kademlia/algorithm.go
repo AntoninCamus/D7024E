@@ -17,7 +17,7 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 	// Prepare the sorter of contacts
 	localClosestContacts := net.GetContacts(target, PARALLELISM_RATE)
 	sorterClosestContacts := model.NewSorter(*target, PARALLELISM_RATE)
-	sorterClosestContacts.InsertContact(*net.GetIdentity())
+	sorterClosestContacts.InsertContact(net.GetIdentity())
 	for _, c := range localClosestContacts {
 		sorterClosestContacts.InsertContact(c)
 	}
@@ -28,7 +28,8 @@ func LookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		for !done {
 			c := <-contactIn //contact target
 			if c != (model.Contact{}) {
-				contacts, err := SendFindContactMessage(&c, net.GetIdentity(), target, BUCKET_SIZE)
+				me := net.GetIdentity()
+				contacts, err := SendFindContactMessage(&c, &me, target, BUCKET_SIZE)
 				//should this check whether target is you?
 				if err != nil {
 					log.Println("Error looking up contact")
@@ -87,7 +88,7 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 	// Prepare the sorter of contacts
 	localClosestContacts := net.GetContacts(fileID, PARALLELISM_RATE)
 	sorterClosestContacts := model.NewSorter(*fileID, PARALLELISM_RATE)
-	sorterClosestContacts.InsertContact(*net.GetIdentity())
+	sorterClosestContacts.InsertContact(net.GetIdentity())
 	for _, c := range localClosestContacts {
 		sorterClosestContacts.InsertContact(c)
 	}
@@ -99,7 +100,8 @@ func LookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 			c := <-contactIn
 			if c != (model.Contact{}) {
 				// Do stuff
-				data, contacts, err := SendFindDataMessage(&c, net.GetIdentity(), fileID, 3) // Best value for nbNeighbors?
+				me := net.GetIdentity()
+				data, contacts, err := SendFindDataMessage(&c, &me, fileID, 3) // Best value for nbNeighbors?
 				if err != nil {
 					log.Println("Error finding data")
 				}
@@ -162,7 +164,8 @@ func StoreData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID
 	//fmt.Print("ID is '%s'", targetID.String())
 
 	for _, contact := range contacts {
-		err = SendStoreMessage(&contact, net.GetIdentity(), data)
+		me := net.GetIdentity()
+		err = SendStoreMessage(&contact, &me, data)
 		if err != nil {
 			return fileID, err
 		}
@@ -177,7 +180,8 @@ func JoinNetwork(net *model.KademliaNetwork, IP string) error {
 		Address: IP,
 	}
 
-	foundContacts, err := SendFindContactMessage(&target, net.GetIdentity(), net.GetIdentity().ID, BUCKET_SIZE)
+	me := net.GetIdentity()
+	foundContacts, err := SendFindContactMessage(&target, &me, net.GetIdentity().ID, BUCKET_SIZE)
 	if err != nil {
 		return err
 	}
