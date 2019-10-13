@@ -154,6 +154,10 @@ func sendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileI
 
 // sendStoreMessage ask to the provided node to store the file, and returns the corresponding ID.
 func sendStoreMessage(target *model.Contact, me *model.Contact, data []byte) error {
+	if target.Address == "" {
+		return fmt.Errorf("target is invalid %s", target.String())
+	}
+
 	client, conn, err := connect(target.Address)
 	if err != nil {
 		log.Print("Unable to connect to", target.Address)

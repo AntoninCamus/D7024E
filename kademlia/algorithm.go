@@ -167,10 +167,12 @@ func storeData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID
 
 	// Store
 	for _, contact := range contacts {
-		me := net.GetIdentity()
-		err = sendStoreMessage(&contact, &me, data)
-		if err != nil {
-			return fileID, err
+		if contact.ID != nil {
+			me := net.GetIdentity()
+			err = sendStoreMessage(&contact, &me, data)
+			if err != nil {
+				return fileID, err
+			}
 		}
 	}
 
