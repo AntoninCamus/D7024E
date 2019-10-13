@@ -161,22 +161,36 @@ func lookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 }
 
 // storeData execute the StoreData kademlia algorithm from the local node
-func storeData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID, err error) {
+func storeData(net *model.KademliaNetwork, data []byte) (model.KademliaID, error) {
+	me := net.GetIdentity()
+	success := make(chan bool, parallelismRate)
 	targetID := model.NewKademliaID(data)
 	contacts := lookupContact(net, targetID)
 
-	// Store
+	// Store func call
+	store := func(dst model.Contact, src model.Contact, data []byte, success chan bool) {
+		err := sendStoreMessage(&dst, &src, data)
+		if err != nil {
+			log.Print("error, store of %s on %s failed : %s", data, dst, err.Error())
+		}
+		success <- err == nil
+	}
+
+	nbWorkers := 0
 	for _, contact := range contacts {
 		if contact.ID != nil {
-			me := net.GetIdentity()
-			err = sendStoreMessage(&contact, &me, data)
-			if err != nil {
-				return fileID, err
-			}
+			nbWorkers++
+			store(contact, me, data, success)
+		}
+	}
+	for i := nbWorkers; i > 0; i-- {
+		res := <-success
+		if res {
+			return *targetID, nil
 		}
 	}
 
-	return *targetID, nil
+	return *targetID, errors.New("could not store the file on any node")
 }
 
 // JoinNetwork execute the JoinNetwork kademlia algorithm from the local node
