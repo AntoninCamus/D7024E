@@ -6,14 +6,16 @@ import (
 	"gotest.tools/assert"
 )
 
-func TestKademliaNetwork_GetIdentity(t *testing.T) {
+// LOCAL (THREAD SAFE, BASIC) FUNCTIONS :
+func TestKademlia_GetIdentity(t *testing.T) {
 	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
 
 	kad := NewKademliaNetwork(me)
 	assert.Equal(t, kad.GetIdentity().ID, me.ID)
+	assert.Equal(t, kad.GetIdentity().Address, me.Address)
 }
 
-func TestKademliaNetwork_SaveAndGetData(t *testing.T) {
+func TestKademlia_SaveAndGetData(t *testing.T) {
 	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
 	kad := NewKademliaNetwork(me)
 
@@ -31,7 +33,7 @@ func TestKademliaNetwork_SaveAndGetData(t *testing.T) {
 	assert.Equal(t, len(contentFound), 0)
 }
 
-func TestKademliaNetwork_RegisterAndGetContact(t *testing.T) {
+func TestKademlia_RegisterAndGetContact(t *testing.T) {
 	me := NewContact(NewRandomKademliaID(), "127.0.0.1")
 	kad := NewKademliaNetwork(me)
 
@@ -43,6 +45,10 @@ func TestKademliaNetwork_RegisterAndGetContact(t *testing.T) {
 	kad.RegisterContact(&c1)
 	kad.RegisterContact(&c2)
 	contacts := kad.GetContacts(me.ID, 10)
+	assert.Equal(t, len(contacts), 2)
+
+	kad.RegisterContact(&c2)
+	contacts = kad.GetContacts(me.ID, 10)
 	assert.Equal(t, len(contacts), 2)
 
 	contains := func(arr []Contact, elem Contact) bool {

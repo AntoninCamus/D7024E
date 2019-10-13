@@ -47,3 +47,46 @@ func Test_FindContact(t *testing.T) {
 	_, err = SendFindContactMessage(&me, &me, model.NewRandomKademliaID(), 0)
 	assert.Error(t, err, "context deadline exceeded")
 }
+
+
+func Test_StoreDataCall(t *testing.T) {
+	tk := model.NewKademliaNetwork(model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "127.0.0.1",
+	})
+	s := StartGrpcServer(tk)
+
+	me := model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "127.0.0.1",
+	}
+
+	err := SendStoreMessage(&me, &me,[]byte("TEST1"))
+	assert.NilError(t, err)
+
+	s.GracefulStop()
+
+	err = SendStoreMessage(&me, &me,[]byte("TEST2"))
+	assert.Error(t, err, "context deadline exceeded")
+}
+
+func Test_FindDataCall(t *testing.T) {
+	tk := model.NewKademliaNetwork(model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "127.0.0.1",
+	})
+	StartGrpcServer(tk)
+
+	me := model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "127.0.0.1",
+	}
+
+	data := []byte("TEST")
+	id := model.NewKademliaID(data)
+
+	SendStoreMessage(&me, &me,data)
+	_, _, err := SendFindDataMessage(&me, &me, id,1)
+
+	assert.NilError(t, err)
+}
