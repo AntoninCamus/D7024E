@@ -3,7 +3,6 @@ package kademlia
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"io/ioutil"
 	"log"
@@ -59,24 +58,23 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" { // Store
 		fileID, err := store(w, r, s.kademliaNetwork)
 		if err != nil {
-			log.Printf("API ERROR : %s", err.Error())
+			log.Printf("API error on POST during store : %s", err.Error())
 			return
 		}
 		jsonAnswer, err = json.Marshal(storeAnswer{FileID: fileID})
 		if err != nil {
-			log.Println(10)
+			log.Printf("API error on POST during marshal : %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	} else if r.Method == "GET" { // Find
 		data, err := find(w, r, s.kademliaNetwork)
 		if err != nil {
-			log.Printf("API ERROR : %s", err.Error())
+			log.Printf("API error on GET during find : %s", err.Error())
 			return
 		}
 		jsonAnswer, err = json.Marshal(findAnswer{Data: data})
 		if err != nil {
-			log.Println(2)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -84,7 +82,6 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 
 	// Write response
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Println(string(jsonAnswer))
 	_, err := w.Write(jsonAnswer)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -96,12 +93,12 @@ func find(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwork
 	// Read input
 	err := r.ParseForm()
 	if err != nil {
-		http.Error(w, "Error reading request body", http.StatusBadRequest)
+		http.Error(w, "error reading request body", http.StatusBadRequest)
 		return "", err
 	}
 	id := r.Form.Get("id")
 	if len(id) == 0 {
-		http.Error(w, "Request parameters dont contain id", http.StatusBadRequest)
+		http.Error(w, "request parameters dont contain id", http.StatusBadRequest)
 		return "", err
 	}
 
@@ -119,18 +116,16 @@ func store(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwor
 	// Read input
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Error reading request body", http.StatusBadRequest)
+		http.Error(w, "error reading request body", http.StatusBadRequest)
 		return "", nil
 	}
-	log.Println("API store received")
 	// Store file
 	file := []byte(string(body))
 	id, err := storeData(network, file)
 	if err != nil {
-		http.Error(w, "Error while storing file", http.StatusInternalServerError)
+		http.Error(w, "error while storing file", http.StatusInternalServerError)
 		return "", err
 	}
-	log.Print("Store successful, new state is :", network.FileStateString())
 	return id.String(), nil
 }
 

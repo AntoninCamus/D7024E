@@ -164,8 +164,8 @@ func lookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 func storeData(net *model.KademliaNetwork, data []byte) (fileID model.KademliaID, err error) {
 	targetID := model.NewKademliaID(data)
 	contacts := lookupContact(net, targetID)
-	//fmt.Print("ID is '%s'", targetID.String())
 
+	// Store
 	for _, contact := range contacts {
 		me := net.GetIdentity()
 		err = sendStoreMessage(&contact, &me, data)
