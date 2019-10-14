@@ -2,6 +2,7 @@ package kademlia
 
 import (
 	"errors"
+	"fmt"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"log"
 )
@@ -12,8 +13,8 @@ const parallelismRate = 3 // Alpha
 // lookupContact execute the lookupContact kademlia algorithm from the local node
 func lookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model.Contact {
 
-	contactIn := make(chan model.Contact, parallelismRate)
-	contactOut := make(chan model.Contact, parallelismRate)
+	contactIn := make(chan model.Contact, parallelismRate*model.BucketSize)
+	contactOut := make(chan model.Contact, parallelismRate*model.BucketSize)
 
 	// Prepare the sorter of contacts
 	localClosestContacts := net.GetContacts(target, parallelismRate)
@@ -28,6 +29,7 @@ func lookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		var done = false
 		for !done {
 			c := <-contactIn //contact target
+			fmt.Printf("Worker received %s\n", c)
 			if c != (model.Contact{}) {
 				me := net.GetIdentity()
 				contacts, err := sendFindContactMessage(&c, &me, target, model.BucketSize)
@@ -48,14 +50,16 @@ func lookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		}
 	}
 
+	numWorkers := 0
+
 	// Create workers with each of the local found closest contacts
 	for _, c := range localClosestContacts {
 		c.CalcDistance(target)
 		contactIn <- c
 		go run(contactIn, contactOut)
+		numWorkers++
 	}
 
-	numWorkers := len(localClosestContacts)
 	for numWorkers > 0 {
 		receivedContact := <-contactOut
 		foundCloser := sorterClosestContacts.InsertContact(receivedContact)
@@ -83,8 +87,8 @@ func lookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 		return data, nil
 	}
 
-	contactIn := make(chan model.Contact, parallelismRate)
-	contactOut := make(chan model.Contact, parallelismRate)
+	contactIn := make(chan model.Contact, parallelismRate*model.BucketSize)
+	contactOut := make(chan model.Contact, parallelismRate*model.BucketSize)
 	dataOut := make(chan []byte, parallelismRate)
 
 	// Prepare the sorter of contacts
