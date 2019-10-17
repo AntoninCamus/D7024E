@@ -39,13 +39,17 @@ func TestContactSorter_InsertContact_InsertOnlyCloserValues(t *testing.T) {
 	s := NewSorter(*targetID, 5)
 
 	for i := 0; i < 100; i++ {
-		added := newContact(NewRandomKademliaID(), "")
-		added.CalcDistance(targetID)
+		addedID := NewRandomKademliaID()
+		contactsBefore := s.GetContacts()
 
 		// Let's compute the expected result :
-		contactsBefore := s.GetContacts()
+		added := newContact(addedID, "")
+		added.CalcDistance(targetID)
 		expectedResult := false
 		for _, c := range contactsBefore {
+			if c.ID != nil {
+				c.CalcDistance(targetID)
+			}
 			if c.ID == added.ID {
 				break
 			} else if c.ID == nil || added.less(&c) {
@@ -55,24 +59,19 @@ func TestContactSorter_InsertContact_InsertOnlyCloserValues(t *testing.T) {
 		}
 
 		// Verify expected results
-		assert.Equal(t, s.InsertContact(added), expectedResult)
+		assert.Equal(t, s.InsertContact(newContact(addedID, "")), expectedResult)
 		if expectedResult == true {
 			// Expected replaced contact position
 			expectedPosition := -1
 
 			for j, c := range contactsBefore {
-				t.Log(contactsBefore)
-				t.Log(added)
 				if c.ID == nil {
-					t.Logf("NIL : %d", j)
 					expectedPosition = j
 					break
 				} else {
 					if expectedPosition == -1 && added.less(&c) {
-						t.Logf("new worse : %d", j)
 						expectedPosition = j
 					} else if expectedPosition != -1 && contactsBefore[expectedPosition].less(&c) {
-						t.Logf("new worse : %d", j)
 						expectedPosition = j
 					}
 				}

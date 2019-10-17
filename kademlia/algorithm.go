@@ -2,7 +2,6 @@ package kademlia
 
 import (
 	"errors"
-	"fmt"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"log"
 )
@@ -29,7 +28,7 @@ func lookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 		var done = false
 		for !done {
 			c := <-contactIn //contact target
-			fmt.Printf("Worker received %s\n", c)
+			log.Printf("Worker received %s\n", c.String())
 			if c != (model.Contact{}) {
 				me := net.GetIdentity()
 				contacts, err := sendFindContactMessage(&c, &me, target, model.BucketSize)
@@ -41,6 +40,7 @@ func lookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 				if contacts != nil {
 					for _, contact := range contacts {
 						contactOut <- *contact
+						log.Printf("Worker sent %s\n", c.String())
 					}
 				}
 

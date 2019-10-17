@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package kademlia;
+package protogen;
 
 service InternalApiService {
     rpc PingCall (PingRequest) returns (PingAnswer);

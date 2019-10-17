@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/LHJ/D7024E/kademlia/model"
+	pb "github.com/LHJ/D7024E/protogen"
 	"google.golang.org/grpc"
 )
 
@@ -20,7 +21,7 @@ type internalAPIServer struct {
 }
 
 // PingCall anwser to PingRequest by checking if they sent a valid KademliaID
-func (s *internalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*PingAnswer, error) {
+func (s *internalAPIServer) PingCall(ctx context.Context, in *pb.PingRequest) (*pb.PingAnswer, error) {
 	log.Printf("Ping received")
 
 	if len(in.GetSenderKademliaId()) != model.IDLength {
@@ -28,11 +29,11 @@ func (s *internalAPIServer) PingCall(ctx context.Context, in *PingRequest) (*Pin
 		return nil, errors.New("invalid request content")
 	}
 
-	return &PingAnswer{ReceiverKademliaId: s.kademlia.GetIdentity().ID[:]}, nil
+	return &pb.PingAnswer{ReceiverKademliaId: s.kademlia.GetIdentity().ID[:]}, nil
 }
 
 // FindContactCall answer to FindContactRequest by sending back the NbNeighbors closest neighbors of the provided ID
-func (s *internalAPIServer) FindContactCall(ctx context.Context, in *FindContactRequest) (*FindContactAnswer, error) {
+func (s *internalAPIServer) FindContactCall(ctx context.Context, in *pb.FindContactRequest) (*pb.FindContactAnswer, error) {
 	srcContact := &model.Contact{}
 	searchedID := &model.KademliaID{}
 
@@ -51,21 +52,21 @@ func (s *internalAPIServer) FindContactCall(ctx context.Context, in *FindContact
 
 	s.kademlia.RegisterContact(srcContact)
 
-	var newContacts []*Contact
+	var newContacts []*pb.Contact
 	for _, c := range modelContact[:] {
-		newContacts = append(newContacts, &Contact{
+		newContacts = append(newContacts, &pb.Contact{
 			ID:      c.ID[:],
 			Address: c.Address,
 		})
 	}
 
-	return &FindContactAnswer{
+	return &pb.FindContactAnswer{
 		Contacts: newContacts,
 	}, nil
 }
 
 // FindDataCall answer to FindDataRequest by sending back the file if found, and if not act as FindContactCall
-func (s *internalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest) (*FindDataAnswer, error) {
+func (s *internalAPIServer) FindDataCall(_ context.Context, in *pb.FindDataRequest) (*pb.FindDataAnswer, error) {
 	srcContact := &model.Contact{}
 
 	tmpID, err := model.KademliaIDFromBytes(in.Src.ID)
@@ -85,26 +86,26 @@ func (s *internalAPIServer) FindDataCall(_ context.Context, in *FindDataRequest)
 	if !found {
 		modelContacts := s.kademlia.GetContacts(searchedFileID, int(in.NbNeighbors))
 
-		var protoContacts []*Contact
+		var protoContacts []*pb.Contact
 		for _, c := range modelContacts[:] {
-			protoContacts = append(protoContacts, &Contact{
+			protoContacts = append(protoContacts, &pb.Contact{
 				ID:      c.ID[:],
 				Address: c.Address,
 			})
 		}
 
-		return &FindDataAnswer{
-			Answer: &FindDataAnswer_DataNotFound{&FindContactAnswer{Contacts: protoContacts}},
+		return &pb.FindDataAnswer{
+			Answer: &pb.FindDataAnswer_DataNotFound{&pb.FindContactAnswer{Contacts: protoContacts}},
 		}, nil
 	}
 
-	return &FindDataAnswer{
-		Answer: &FindDataAnswer_DataFound{data},
+	return &pb.FindDataAnswer{
+		Answer: &pb.FindDataAnswer_DataFound{data},
 	}, nil
 }
 
 // StoreDataCall answer to FindDataRequest by sending back the file if found, and if not act as FindContactCall
-func (s *internalAPIServer) StoreDataCall(_ context.Context, in *StoreDataRequest) (*StoreDataAnswer, error) {
+func (s *internalAPIServer) StoreDataCall(_ context.Context, in *pb.StoreDataRequest) (*pb.StoreDataAnswer, error) {
 	srcContact := &model.Contact{}
 
 	tmpID, err := model.KademliaIDFromBytes(in.Src.ID)
@@ -118,9 +119,9 @@ func (s *internalAPIServer) StoreDataCall(_ context.Context, in *StoreDataReques
 	fileID := model.NewKademliaID(in.Data)
 	err = s.kademlia.SaveData(fileID, in.Data[:])
 	if err != nil {
-		return &StoreDataAnswer{Ok: false}, nil
+		return &pb.StoreDataAnswer{Ok: false}, nil
 	}
-	return &StoreDataAnswer{Ok: true}, nil
+	return &pb.StoreDataAnswer{Ok: true}, nil
 }
 
 // StartGrpcServer start the gRPC internal API
@@ -132,7 +133,7 @@ func StartGrpcServer(kademlia *model.KademliaNetwork) *grpc.Server {
 
 	//Creating and registering the server
 	grpcServer := grpc.NewServer()
-	RegisterInternalApiServiceServer(grpcServer, &internalAPIServer{kademlia: kademlia})
+	pb.RegisterInternalApiServiceServer(grpcServer, &internalAPIServer{kademlia: kademlia})
 
 	serving := func() {
 		//Blocking call

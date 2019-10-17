@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/LHJ/D7024E/kademlia/model"
+	pb "github.com/LHJ/D7024E/protogen"
 	"google.golang.org/grpc"
 )
 
-func connect(address string) (InternalApiServiceClient, *grpc.ClientConn, error) {
+func connect(address string) (pb.InternalApiServiceClient, *grpc.ClientConn, error) {
 	conn, err := grpc.Dial(
 		fmt.Sprintf("%s:%d", address, grpcPort),
 		grpc.WithInsecure(),
@@ -22,7 +23,7 @@ func connect(address string) (InternalApiServiceClient, *grpc.ClientConn, error)
 		return nil, nil, err
 	}
 
-	client := NewInternalApiServiceClient(conn)
+	client := pb.NewInternalApiServiceClient(conn)
 	return client, conn, nil
 }
 
@@ -42,7 +43,7 @@ func sendPingMessage(target *model.Contact) bool {
 
 	ans, err := client.PingCall(
 		context.Background(),
-		&PingRequest{SenderKademliaId: model.NewRandomKademliaID()[:]},
+		&pb.PingRequest{SenderKademliaId: model.NewRandomKademliaID()[:]},
 	)
 	if err != nil {
 		log.Print(err)
@@ -67,8 +68,8 @@ func sendFindContactMessage(target *model.Contact, me *model.Contact, searchedCo
 
 	ans, err := client.FindContactCall(
 		context.Background(),
-		&FindContactRequest{
-			Src: &Contact{
+		&pb.FindContactRequest{
+			Src: &pb.Contact{
 				ID:      me.ID[:],
 				Address: me.Address,
 			},
@@ -113,8 +114,8 @@ func sendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileI
 
 	ans, err := client.FindDataCall(
 		context.Background(),
-		&FindDataRequest{
-			Src: &Contact{
+		&pb.FindDataRequest{
+			Src: &pb.Contact{
 				ID:      me.ID[:],
 				Address: me.Address,
 			},
@@ -128,10 +129,10 @@ func sendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileI
 	}
 
 	switch ans.GetAnswer().(type) {
-	case *FindDataAnswer_DataFound:
+	case *pb.FindDataAnswer_DataFound:
 		return ans.GetDataFound(), nil, nil
 
-	case *FindDataAnswer_DataNotFound:
+	case *pb.FindDataAnswer_DataNotFound:
 		var modelContacts []*model.Contact
 		for _, c := range ans.GetDataNotFound().Contacts[:] {
 			tmpID, err := model.KademliaIDFromBytes(c.ID)
@@ -171,8 +172,8 @@ func sendStoreMessage(target *model.Contact, me *model.Contact, data []byte) err
 
 	done, err := client.StoreDataCall(
 		context.Background(),
-		&StoreDataRequest{
-			Src: &Contact{
+		&pb.StoreDataRequest{
+			Src: &pb.Contact{
 				ID:      me.ID[:],
 				Address: me.Address,
 			},

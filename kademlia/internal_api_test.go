@@ -79,7 +79,8 @@ func Test_FindDataCall(t *testing.T) {
 	})
 	StartGrpcServer(tk)
 
-	me := model.Contact{
+	me := tk.GetIdentity()
+	other := model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	}
@@ -87,10 +88,16 @@ func Test_FindDataCall(t *testing.T) {
 	data := []byte("TEST")
 	id := model.NewKademliaID(data)
 
-	err := sendStoreMessage(&me, &me, data)
+	err := sendStoreMessage(&me, &other, data)
 	assert.NilError(t, err)
 
-	_, _, err = sendFindDataMessage(&me, &me, id, 1)
-
+	dataReceived, _, err := sendFindDataMessage(&me, &other, id, 1)
 	assert.NilError(t, err)
+	assert.Equal(t, string(dataReceived), string(data))
+
+	dataReceived, contacts, err := sendFindDataMessage(&me, &other, model.NewRandomKademliaID(), 1)
+	assert.NilError(t, err)
+	assert.Equal(t, len(dataReceived), 0)
+	assert.Equal(t, len(contacts), 1)
+	assert.Assert(t, contacts[0].ID, other.ID)
 }

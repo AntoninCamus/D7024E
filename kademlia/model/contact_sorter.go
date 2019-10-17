@@ -18,6 +18,8 @@ func NewSorter(target KademliaID, size int) *contactSorter {
 // If the sorter is full, keep only the closer contacts.
 // Returns if the sorter state was changed or not.
 func (s *contactSorter) InsertContact(contactToInsert Contact) bool {
+	contactToInsert.CalcDistance(&s.target)
+
 	// We start by checking edge cases :
 	for i, c := range s.contacts {
 		if c.ID == nil {
