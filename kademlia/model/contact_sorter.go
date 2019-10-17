@@ -14,47 +14,45 @@ func NewSorter(target KademliaID, size int) *contactSorter {
 	}
 }
 
-// InsertContact insert the *contact* into the sorter.
+// InsertContact insert the *contactToInsert* into the sorter.
 // If the sorter is full, keep only the closer contacts.
 // Returns if the sorter state was changed or not.
-func (s *contactSorter) InsertContact(contact Contact) bool {
-	// We start by calculating the distance of the target
-	contact.CalcDistance(&s.target)
-
-	// At start, we consider that maybe the contact is further than every of existing contacts
-	further := -1
-
-	// Then we iterate
+func (s *contactSorter) InsertContact(contactToInsert Contact) bool {
+	// We start by checking edge cases :
 	for i, c := range s.contacts {
 		if c.ID == nil {
-			// If the contact is empty, replace it and return there
-			further = i
-			break
-		} else if c.ID == contact.ID {
-			// If the contact is already present, interrupt
-			further = -1
-			break
-		} else {
-			// If the current contact is further than the current furthest replace it and set the position
-			if further != -1 && c.less(&s.contacts[further]) {
-				// If further != -1 we check the contacts list
-				further = i
-			} else if further == -1 && c.less(&contact) {
-				// Else it means that the worse is the new one
-				further = i
-			}
+			// If one of the contact is empty, it means that there is room in the sorter
+			s.contacts[i] = contactToInsert
+			return true
+		} else if contactToInsert.ID.equals(c.ID) {
+			// If the contactToInsert is found in the sorter, we can't insert it
+			return false
 		}
 	}
 
-	if further != -1 {
-		// The provided contact should be inserted
-		s.contacts[further] = contact
+	// In the case where there is no room for any more contacts :
+	// We search for the worse contact of the sorter
+	worsePosition := 0
+	for i := 1; i < len(s.contacts); i++ {
+		if s.contacts[worsePosition].less(&s.contacts[i]) {
+			// If the worse contact is better than this one, this one became the worse
+			worsePosition = i
+		}
 	}
 
-	return further != -1
+	// If the contactToInsert is better than the worse, insert it
+	contactToInsert.CalcDistance(&s.target)
+	if contactToInsert.less(&s.contacts[worsePosition]) {
+		s.contacts[worsePosition] = contactToInsert
+		return true
+	} else {
+		return false
+	}
 }
 
 // GetContacts return the full internal state of the sorter.
 func (s *contactSorter) GetContacts() []Contact {
-	return s.contacts
+	newList := make([]Contact, len(s.contacts))
+	copy(newList, s.contacts)
+	return newList
 }

@@ -1,7 +1,6 @@
 package kademlia
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"log"
@@ -9,10 +8,8 @@ import (
 	"os"
 )
 
-func getMachineHash() (hash []byte, err error) {
-	hostname, err := os.Hostname()
-	sha := sha1.Sum([]byte(hostname))
-	hash = sha[:]
+func getHostname() (hostname string, err error) {
+	hostname, err = os.Hostname()
 	return
 }
 
@@ -44,7 +41,7 @@ func getAddress() (string, error) {
 
 // GetContactFromHW returns a contact created from the hardware on which the node is running.
 func GetContactFromHW() model.Contact {
-	hash, err := getMachineHash()
+	hostname, err := getHostname()
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Unable to get hostname to create contact : %s", err))
 	}
@@ -53,7 +50,7 @@ func GetContactFromHW() model.Contact {
 		log.Fatal(fmt.Sprintf("Unable to get address to create contact : %s", err))
 	}
 	return model.Contact{
-		ID:      model.NewKademliaID(hash),
+		ID:      model.NewKademliaID([]byte(hostname)),
 		Address: addr,
 	}
 }

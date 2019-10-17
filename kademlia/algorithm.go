@@ -175,7 +175,7 @@ func storeData(net *model.KademliaNetwork, data []byte) (model.KademliaID, error
 	store := func(dst model.Contact, src model.Contact, data []byte, success chan bool) {
 		err := sendStoreMessage(&dst, &src, data)
 		if err != nil {
-			log.Print("error, store of %s on %s failed : %s", data, dst, err.Error())
+			log.Printf("error, store of %b on %s failed : %s", data, dst.String(), err.Error())
 		}
 		success <- err == nil
 	}

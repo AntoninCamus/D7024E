@@ -52,22 +52,12 @@ func (candidates *contactCandidates) getContacts(count int) []Contact {
 
 // Sort the Contacts in ContactCandidates
 func (candidates *contactCandidates) sort() {
-	sort.Sort(candidates)
+	sort.Slice(candidates.contacts, func(i, j int) bool {
+		return candidates.contacts[i].less(&candidates.contacts[j])
+	})
 }
 
 // Len returns the length of the ContactCandidates
 func (candidates *contactCandidates) Len() int {
 	return len(candidates.contacts)
-}
-
-// Swap the position of the Contacts at i and j
-// WARNING does not check if either i or j is within range
-func (candidates *contactCandidates) Swap(i, j int) {
-	candidates.contacts[i], candidates.contacts[j] = candidates.contacts[j], candidates.contacts[i]
-}
-
-// Less returns true if the Contact at index i is smaller than
-// the Contact at index j
-func (candidates *contactCandidates) Less(i, j int) bool {
-	return candidates.contacts[i].less(&candidates.contacts[j])
 }

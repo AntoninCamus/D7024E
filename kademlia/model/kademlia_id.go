@@ -64,12 +64,14 @@ func NewRandomKademliaID() *KademliaID {
 
 // Less returns true if kademliaID < otherKademliaID (bitwise)
 func (kademliaID KademliaID) less(otherKademliaID *KademliaID) bool {
+	result := false
 	for i := 0; i < IDLength; i++ {
 		if kademliaID[i] != otherKademliaID[i] {
-			return kademliaID[i] < otherKademliaID[i]
+			result = kademliaID[i] < otherKademliaID[i]
+			break
 		}
 	}
-	return false
+	return result
 }
 
 // Equals returns true if kademliaID == otherKademliaID (bitwise)

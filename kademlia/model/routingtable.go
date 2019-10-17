@@ -4,8 +4,8 @@ import (
 	"fmt"
 )
 
-//BucketSize is the size of one bucket
-const BucketSize = 3
+//BucketSize is the size of one contactBucket
+const BucketSize = 20
 
 // routingTable definition
 // keeps a refrence contact of me and an array of buckets
@@ -31,7 +31,7 @@ func (routingTable *routingTable) addContact(contact Contact) {
 	b.addContact(contact)
 }
 
-// containContact return true if a bucket contain this contact already
+// containContact return true if a contactBucket contain this contact already
 func (routingTable *routingTable) containContact(id KademliaID) bool {
 	idx := routingTable.getBucketIndex(&id)
 	for e := routingTable.buckets[idx].list.Front(); e != nil; e = e.Next() {

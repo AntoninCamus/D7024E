@@ -19,14 +19,20 @@ func TestKademlia_SaveAndGetData(t *testing.T) {
 	me := newContact(NewRandomKademliaID(), "127.0.0.1")
 	kad := NewKademliaNetwork(me)
 
+	// Save a first time some data
 	fileID := NewRandomKademliaID()
 	content := []byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
 	err := kad.SaveData(fileID, content)
 	assert.NilError(t, err)
 
+	// Try to recover it
 	contentFound, found := kad.GetData(fileID)
 	assert.Assert(t, found)
 	assert.DeepEqual(t, contentFound, content)
+
+	// Now let's try to update this file
+	err = kad.SaveData(fileID, content)
+	assert.NilError(t, err)
 
 	contentFound, found = kad.GetData(NewRandomKademliaID())
 	assert.Assert(t, !found)

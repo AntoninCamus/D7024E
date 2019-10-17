@@ -19,12 +19,15 @@ func Test_Ping(t *testing.T) {
 		Address: "127.0.0.1",
 	}
 
-	p1 := sendPingMessage(&me)
-	assert.Equal(t, p1, true)
+	// Send a normal ping that should work
+	p_normal := sendPingMessage(&me)
+	assert.Assert(t, p_normal)
 	s.GracefulStop()
 
-	p2 := sendPingMessage(&me)
-	assert.Equal(t, p2, false)
+	// Send a ping on a offline node
+	p_offline := sendPingMessage(&me)
+	assert.Assert(t, !p_offline)
+
 }
 
 func Test_FindContact(t *testing.T) {
