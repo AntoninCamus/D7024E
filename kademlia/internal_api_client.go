@@ -32,7 +32,7 @@ func sendPingMessage(target *model.Contact) bool {
 	// Open gRPC connection
 	client, conn, err := connect(target.Address)
 	if err != nil {
-		log.Print(err)
+		//log.Print(err)
 		return false
 	}
 	defer func() {
@@ -46,7 +46,7 @@ func sendPingMessage(target *model.Contact) bool {
 		&pb.PingRequest{SenderKademliaId: model.NewRandomKademliaID()[:]},
 	)
 	if err != nil {
-		log.Print(err)
+		//log.Print(err)
 		return false
 	}
 

@@ -46,6 +46,14 @@ func (kademlia *KademliaNetwork) RegisterContact(contact *Contact) {
 	}
 }
 
+//UnregisterContact remove the *contact* from the routing table
+func (kademlia *KademliaNetwork) UnregisterContact(contact Contact) {
+	kademlia.tableMut.Lock()
+	kademlia.table.removeContact(contact)
+	kademlia.tableMut.Unlock()
+	log.Printf("Removed contact %s,\n new state is %s", contact.String(), kademlia.ContactStateString())
+}
+
 //GetContacts returns the *number* closest contacts to the *searchedID*
 func (kademlia *KademliaNetwork) GetContacts(searchedID *KademliaID, number int) []Contact {
 	kademlia.tableMut.RLock()

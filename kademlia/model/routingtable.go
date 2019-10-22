@@ -31,6 +31,13 @@ func (routingTable *routingTable) addContact(contact Contact) {
 	b.addContact(contact)
 }
 
+// removeContact remove the contact from his Bucket
+func (routingTable *routingTable) removeContact(contact Contact) {
+	bucketIndex := routingTable.getBucketIndex(contact.ID)
+	b := routingTable.buckets[bucketIndex]
+	b.removeContact(contact)
+}
+
 // containContact return true if a contactBucket contain this contact already
 func (routingTable *routingTable) containContact(id KademliaID) bool {
 	idx := routingTable.getBucketIndex(&id)
@@ -95,7 +102,7 @@ func (routingTable *routingTable) String() string {
 	var ret = "["
 	for _, val := range routingTable.buckets {
 		if val.len() > 0 {
-			ret += fmt.Sprintf("%s,", val.string())
+			ret += fmt.Sprintf("[%s],", val.len())
 			skip = false
 		} else {
 			if !skip {
