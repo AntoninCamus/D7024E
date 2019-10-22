@@ -37,7 +37,7 @@ func main() {
 	// Join if needed
 	if len(ipToJoin) > 0 {
 		rand.Seed(time.Now().UnixNano())
-		n := rand.Intn(20) // n will be between 0 and 10
+		n := rand.Intn(5) // n will be between 0 and 10
 		fmt.Printf("Sleeping %d seconds before joining...\n", n)
 		time.Sleep(time.Duration(n) * time.Second)
 		err := kademlia.JoinNetwork(k, ipToJoin)

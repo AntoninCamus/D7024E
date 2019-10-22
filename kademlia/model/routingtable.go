@@ -102,7 +102,7 @@ func (routingTable *routingTable) String() string {
 	var ret = "["
 	for _, val := range routingTable.buckets {
 		if val.len() > 0 {
-			ret += fmt.Sprintf("[%s],", val.len())
+			ret += fmt.Sprintf("[%d],", val.len())
 			skip = false
 		} else {
 			if !skip {

@@ -1,7 +1,6 @@
 package kademlia
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"io/ioutil"
@@ -109,7 +108,7 @@ func find(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwork
 		http.Error(w, "Error while retrieving file", http.StatusNotFound)
 		return "", err
 	}
-	return base64.StdEncoding.EncodeToString(file), nil
+	return string(file), nil
 }
 
 func store(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwork) (string, error) {

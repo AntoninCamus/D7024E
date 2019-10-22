@@ -63,14 +63,12 @@ func (kademlia *KademliaNetwork) GetContacts(searchedID *KademliaID, number int)
 
 //SaveData save the content of the file *content* under the *fileID*
 func (kademlia *KademliaNetwork) SaveData(fileID *KademliaID, content []byte) error {
-	kademlia.filesMut.RLock()
+	kademlia.filesMut.Lock()
 	if kademlia.files[*fileID].value == nil {
 		log.Printf("file %s added, new state is %s", fileID, kademlia.fileStateString())
 	} else {
 		log.Printf("file %s updated, new state is %s", fileID, kademlia.fileStateString())
 	}
-	kademlia.filesMut.RUnlock()
-	kademlia.filesMut.Lock()
 	kademlia.files[*fileID] = file{
 		value:       content,
 		refreshedAt: time.Now(),
