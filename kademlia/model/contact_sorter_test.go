@@ -52,7 +52,7 @@ func TestContactSorter_InsertContact_InsertOnlyCloserValues(t *testing.T) {
 			}
 			if c.ID == added.ID {
 				break
-			} else if c.ID == nil || added.less(&c) {
+			} else if c.ID == nil || added.Less(&c) {
 				expectedResult = true
 				break
 			}
@@ -69,9 +69,9 @@ func TestContactSorter_InsertContact_InsertOnlyCloserValues(t *testing.T) {
 					expectedPosition = j
 					break
 				} else {
-					if expectedPosition == -1 && added.less(&c) {
+					if expectedPosition == -1 && added.Less(&c) {
 						expectedPosition = j
-					} else if expectedPosition != -1 && contactsBefore[expectedPosition].less(&c) {
+					} else if expectedPosition != -1 && contactsBefore[expectedPosition].Less(&c) {
 						expectedPosition = j
 					}
 				}

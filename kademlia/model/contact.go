@@ -25,7 +25,7 @@ func (contact *Contact) CalcDistance(target *KademliaID) {
 }
 
 // less returns true if contact.distance < otherContact.distance
-func (contact *Contact) less(otherContact *Contact) bool {
+func (contact *Contact) Less(otherContact *Contact) bool {
 	return contact.distance.less(otherContact.distance)
 }
 
@@ -53,7 +53,7 @@ func (candidates *contactCandidates) getContacts(count int) []Contact {
 // Sort the Contacts in ContactCandidates
 func (candidates *contactCandidates) sort() {
 	sort.Slice(candidates.contacts, func(i, j int) bool {
-		return candidates.contacts[i].less(&candidates.contacts[j])
+		return candidates.contacts[i].Less(&candidates.contacts[j])
 	})
 }
 

@@ -36,7 +36,7 @@ func (s *contactSorter) InsertContact(contactToInsert Contact) bool {
 	// We search for the worse contact of the sorter
 	worsePosition := 0
 	for i := 1; i < len(s.contacts); i++ {
-		if s.contacts[worsePosition].less(&s.contacts[i]) {
+		if s.contacts[worsePosition].Less(&s.contacts[i]) {
 			// If the worse contact is better than this one, this one became the worse
 			worsePosition = i
 		}
@@ -44,7 +44,7 @@ func (s *contactSorter) InsertContact(contactToInsert Contact) bool {
 
 	// If the contactToInsert is better than the worse, insert it
 	contactToInsert.CalcDistance(&s.target)
-	if contactToInsert.less(&s.contacts[worsePosition]) {
+	if contactToInsert.Less(&s.contacts[worsePosition]) {
 		s.contacts[worsePosition] = contactToInsert
 		return true
 	} else {
