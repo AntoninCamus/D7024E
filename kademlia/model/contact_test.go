@@ -63,3 +63,39 @@ func TestGetContacts(t *testing.T){
 	}
 }
 
+func TestContact_String(t *testing.T) {
+	testContact := newContact(NewRandomKademliaID(), "someaddress")
+	string := testContact.String()
+	testString := "contact(\"" + testContact.ID.String() + "\", \"" + testContact.Address +"\")"
+	if string != testString{
+		t.Errorf("String() did not return correctly formatted single contact")//. %s, %s", string, testString)
+	}
+}
+
+func TestSortLess(t *testing.T){
+	ref := KademliaIDFromString("ffffffffffffffffffffffffffffffffffffffff")
+	top := KademliaIDFromString("fffffffffffffffffffffffffffffffffffffffe")
+	mid := KademliaIDFromString("7777777777777777777777777777777777777777")
+	bot := KademliaIDFromString("0000000000000000000000000000000000000000")
+
+	refContact := newContact(ref, "ref")
+	topContact := newContact(top, "top")
+	midContact := newContact(mid, "mid")
+	botContact := newContact(bot, "bot")
+
+	topContact.CalcDistance(refContact.ID)
+	midContact.CalcDistance(refContact.ID)
+	botContact.CalcDistance(refContact.ID)
+
+	contactsArray := []Contact{botContact, topContact, midContact}
+
+	contacts := contactCandidates{contactsArray}
+
+	contacts.sort()
+
+	sortedContacts := contacts.getContacts(3)
+
+	if sortedContacts[0] != topContact || sortedContacts[1] != midContact || sortedContacts[2] != botContact {
+		t.Errorf("sort() did not return a correctly sorted array")
+	}
+}
