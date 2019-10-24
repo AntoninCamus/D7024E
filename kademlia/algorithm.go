@@ -122,7 +122,7 @@ func lookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 			if c != (model.Contact{}) {
 				// Do stuff
 				me := net.GetIdentity()
-				dataFound, contacts, err := sendFindDataMessage(&c, &me, fileID, 3) // Best value for nbNeighbors?
+				dataFound, contacts, err := sendFindDataMessage(&c, &me, fileID, model.BucketSize)
 				if err != nil {
 					log.Println("Error finding dataFound")
 				}
