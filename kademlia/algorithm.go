@@ -122,13 +122,13 @@ func lookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 			if c != (model.Contact{}) {
 				// Do stuff
 				me := net.GetIdentity()
-				dataFound, contacts, err := sendFindDataMessage(&c, &me, fileID, model.BucketSize)
+				data, contacts, err := sendFindDataMessage(&c, &me, fileID, model.BucketSize)
 				if err != nil {
-					log.Println("Error finding dataFound")
+					log.Println("Error finding data")
 				}
 
-				if dataFound != nil {
-					dataOut <- dataFound
+				if data != nil {
+					dataOut <- data
 					done = true
 				} else {
 					// Queue up received contacts
