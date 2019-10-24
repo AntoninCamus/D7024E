@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -105,10 +104,5 @@ func (kademlia *KademliaNetwork) ContactStateString() string {
 
 //fileStateString return the files table state on the form of a string
 func (kademlia *KademliaNetwork) fileStateString() string {
-	var ret = "["
-	for _, val := range kademlia.files {
-		ret += fmt.Sprintf("%s,", val.value)
-	}
-	ret += "]"
-	return ret
+	return "[" + string(len(kademlia.files)) + "]"
 }

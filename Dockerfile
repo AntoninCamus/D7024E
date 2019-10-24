@@ -4,7 +4,7 @@ FROM golang:latest
 WORKDIR /app
 
 # Install system dependancies
-RUN apt-get update && apt-get install python3 python3-requests protobuf-compiler -y
+RUN apt-get update && apt-get install protobuf-compiler -y
 RUN go get -u github.com/golang/protobuf/protoc-gen-go
 
 # Copy go mod and sum files

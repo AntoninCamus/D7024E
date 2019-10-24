@@ -28,7 +28,7 @@ func connect(address string) (pb.InternalApiServiceClient, *grpc.ClientConn, err
 }
 
 // sendPingMessage ping the provided contact and return if it is present or not.
-func sendPingMessage(target *model.Contact) bool {
+func sendPingMessage(target *model.Contact, registerMe bool) bool {
 	// Open gRPC connection
 	client, conn, err := connect(target.Address)
 	if err != nil {
@@ -43,7 +43,10 @@ func sendPingMessage(target *model.Contact) bool {
 
 	ans, err := client.PingCall(
 		context.Background(),
-		&pb.PingRequest{SenderKademliaId: model.NewRandomKademliaID()[:]},
+		&pb.PingRequest{
+			RegisterMe:       registerMe,
+			SenderKademliaId: model.NewRandomKademliaID()[:],
+		},
 	)
 	if err != nil {
 		//log.Print(err)

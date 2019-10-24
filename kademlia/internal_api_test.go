@@ -20,12 +20,12 @@ func Test_Ping(t *testing.T) {
 	}
 
 	// Send a normal ping that should work
-	p_normal := sendPingMessage(&me)
+	p_normal := sendPingMessage(&me, false)
 	assert.Assert(t, p_normal)
 	s.GracefulStop()
 
 	// Send a ping on a offline node
-	p_offline := sendPingMessage(&me)
+	p_offline := sendPingMessage(&me, false)
 	assert.Assert(t, !p_offline)
 
 }
@@ -99,5 +99,5 @@ func Test_FindDataCall(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, len(dataReceived), 0)
 	assert.Equal(t, len(contacts), 1)
-	assert.Assert(t, contacts[0].ID, other.ID)
+	assert.Equal(t, contacts[0].ID.String(), other.ID.String())
 }

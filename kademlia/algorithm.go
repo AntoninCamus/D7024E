@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"log"
-	"sort"
 )
 
 //parallelismRate is the number of parallel requests to do
@@ -72,8 +71,10 @@ func lookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 			}
 		}
 
-		if !foundCloser {
+		if !foundCloser && len(contactIn) == 0 {
 			// If we did not found any new contact, we decrement the number of workers
+			// We send a empty contact to kill a worker
+			contactIn <- model.Contact{}
 			numWorkers--
 		}
 	}
@@ -151,9 +152,6 @@ func lookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 			for _, c := range receivedContacts {
 				c.CalcDistance(fileID)
 			}
-			sort.Slice(receivedContacts, func(i, j int) bool {
-				return receivedContacts[j].Less(receivedContacts[i])
-			})
 
 			// If we found a closer contact, we should continue searching
 			// We queue up the new found contact to the algorithm
@@ -167,7 +165,7 @@ func lookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 					break
 				}
 			}
-			if !foundCloser {
+			if !foundCloser && len(contactIn) == 0 {
 				// If we did not, we should stop searching
 				// We send a empty contact to kill a worker
 				contactIn <- model.Contact{}
@@ -226,7 +224,9 @@ func JoinNetwork(net *model.KademliaNetwork, IP string) error {
 	}
 
 	for _, contact := range foundContacts {
-		net.RegisterContact(contact)
+		if sendPingMessage(contact, true) {
+			net.RegisterContact(contact)
+		}
 	}
 
 	return nil

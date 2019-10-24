@@ -13,6 +13,7 @@ service InternalApiService {
 
 message PingRequest {
     bytes sender_kademlia_id = 1;
+    bool register_me = 2;
 }
 
 message PingAnswer {

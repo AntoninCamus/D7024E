@@ -80,3 +80,24 @@ func TestContactSorter_InsertContact_InsertOnlyCloserValues(t *testing.T) {
 		}
 	}
 }
+
+func TestContactSorter_ManualTest(t *testing.T) {
+	id := KademliaIDFromString("ffffffffffffffffffffffffffffffffffffffff")
+	s := NewSorter(*id, 3)
+
+	c4 := newContact(KademliaIDFromString("0000000000000000000000000000000000000000"), "10.0.0.201")
+	c3 := newContact(KademliaIDFromString("fffffffffffffffffffffffffffffffffffffff0"), "10.0.0.201")
+	c2 := newContact(KademliaIDFromString("ffffffffffffffffffffffffffffffffffffff00"), "10.0.0.201")
+	c1 := newContact(KademliaIDFromString("fffffffffffffffffffffffffffffffffffff000"), "10.0.0.201")
+
+	assert.Assert(t, s.InsertContact(c4))
+	assert.Assert(t, s.InsertContact(c3))
+	assert.Assert(t, s.InsertContact(c2))
+	assert.Assert(t, s.InsertContact(c1))
+	assert.Assert(t, !s.InsertContact(c3))
+
+	s.GetContacts()
+
+	assert.Assert(t, !s.InsertContact(newContact(KademliaIDFromString("210fc7bb818639ac48a4c6afa2f1581a8b9525e2"), "")))
+	s.GetContacts()
+}

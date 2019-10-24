@@ -23,65 +23,18 @@ type internalAPIServer struct {
 // PingCall anwser to PingRequest by checking if they sent a valid KademliaID
 func (s *internalAPIServer) PingCall(ctx context.Context, in *pb.PingRequest) (*pb.PingAnswer, error) {
 	if len(in.GetSenderKademliaId()) != model.IDLength {
-		log.Printf("Error sent : Invalid request content")
+		log.Printf("GRPC : Error sent : Invalid request content")
 		return nil, errors.New("invalid request content")
 	}
 
 	return &pb.PingAnswer{ReceiverKademliaId: s.kademlia.GetIdentity().ID[:]}, nil
 }
 
-// parallelAllCheckPing ping every contact provided and removes from the network distant one
-/*func parallelAllCheckPing(k *model.KademliaNetwork, contacts []model.Contact) bool {
-	// Prepare channels
-	contactIn := make(chan model.Contact, len(contacts))
-	resultOut := make(chan bool, len(contacts))
-	for _,c := range contacts {
-		contactIn <- c
-	}
-
-	// Worker routine
-	pinger := func(kl *model.KademliaNetwork, contactIn chan model.Contact, resultOut chan bool) {
-		var done = false
-		for !done {
-			c := <-contactIn
-			log.Printf("Ping worker received %s\n", c.String())
-			if c != (model.Contact{}) {
-				result := sendPingMessage(&c)
-				if ! result {
-					kl.UnregisterContact(c)
-				}
-				resultOut <- result
-			} else {
-				done = true
-			}
-		}
-	}
-
-	for i := 0; i < len(contacts) && i < parallelismRate; i++ {
-		go pinger(k, contactIn, resultOut)
-	}
-
-	result := true
-	for _ = range contacts {
-		res := <- resultOut
-		if ! res {
-			result = false
-		}
-	}
-
-	for i := 0; i < len(contacts) && i < parallelismRate; i++ {
-		contactIn <- model.Contact{}
-	}
-
-	return result
-}
-*/
-
 // allCheckPing ping every contact and removes from the network distant one
 func allCheckPing(k *model.KademliaNetwork, contacts []model.Contact) bool {
 	result := true
 	for _, c := range contacts[:] {
-		if !sendPingMessage(&c) {
+		if !sendPingMessage(&c, false) {
 			k.UnregisterContact(c)
 			result = false
 		}
@@ -95,7 +48,7 @@ func getDataAndConvert(network *model.KademliaNetwork, ID *model.KademliaID, nb 
 	// Before returning any contact we check their availability
 	allCheckPing(network, modelContact)
 	/*for allCheckPing(network, modelContact) {
-		// WARN : will create a pingstorm, maybe it is preferable to return less contacts
+		// WARN : will create a pingstorm, and that is not that bad to not have exactly 20 contacts
 		// If allCheck removed a contact, we retry to return the correct number
 		modelContact = network.GetContacts(ID, nb)
 	}*/
@@ -103,14 +56,10 @@ func getDataAndConvert(network *model.KademliaNetwork, ID *model.KademliaID, nb 
 	// Then we convert them into *pb.Contact
 	var pbContacts []*pb.Contact
 	for _, c := range modelContact[:] {
-		if sendPingMessage(&c) {
-			pbContacts = append(pbContacts, &pb.Contact{
-				ID:      c.ID[:],
-				Address: c.Address,
-			})
-		} else {
-			network.UnregisterContact(c)
-		}
+		pbContacts = append(pbContacts, &pb.Contact{
+			ID:      c.ID[:],
+			Address: c.Address,
+		})
 	}
 
 	return pbContacts
@@ -162,17 +111,19 @@ func (s *internalAPIServer) FindDataCall(_ context.Context, in *pb.FindDataReque
 	if !found {
 		contacts := getDataAndConvert(s.kademlia, searchedFileID, int(in.NbNeighbors))
 
+		log.Printf(" GRPC : Data not found, sending back %d contacts to %s", len(contacts), srcContact.String())
 		return &pb.FindDataAnswer{
 			Answer: &pb.FindDataAnswer_DataNotFound{&pb.FindContactAnswer{Contacts: contacts}},
 		}, nil
 	}
 
+	log.Printf("GRPC : Sending back data %s to %s", data, srcContact.String())
 	return &pb.FindDataAnswer{
 		Answer: &pb.FindDataAnswer_DataFound{data},
 	}, nil
 }
 
-// StoreDataCall answer to FindDataRequest by sending back the file if found, and if not act as FindContactCall
+// StoreDataCall store the file, and send if the store was done
 func (s *internalAPIServer) StoreDataCall(_ context.Context, in *pb.StoreDataRequest) (*pb.StoreDataAnswer, error) {
 	srcContact := &model.Contact{}
 
@@ -189,6 +140,7 @@ func (s *internalAPIServer) StoreDataCall(_ context.Context, in *pb.StoreDataReq
 	if err != nil {
 		return &pb.StoreDataAnswer{Ok: false}, nil
 	}
+	log.Printf("GRPC : Storing data %s", srcContact.String())
 	return &pb.StoreDataAnswer{Ok: true}, nil
 }
 

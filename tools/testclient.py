@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-import os
-import sys
+import concurrent.futures
+import random
 import requests
 import string
-import random
-import concurrent.futures
-from optparse import OptionParser
 from functools import partial
 
 URL = "http://172.18.0.1:8081"
-K = 10
+K = 20
 
 def store(url: str, file: str):
     response = requests.post(url + "/kademlia/file", file)
