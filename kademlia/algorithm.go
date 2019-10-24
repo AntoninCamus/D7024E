@@ -62,30 +62,18 @@ func lookupContact(net *model.KademliaNetwork, target *model.KademliaID) []model
 	for numWorkers > 0 {
 		receivedContacts := <-contactOut
 
-		// Sort the contacts for insertion
-		for _, c := range receivedContacts {
-			c.CalcDistance(target)
-		}
-		sort.Slice(receivedContacts, func(i, j int) bool {
-			return receivedContacts[j].Less(receivedContacts[i])
-		})
-
-		// If we found a closer contact, we should continue searching
-		// We queue up the new found contact to the algorithm
+		// If we found a closer contact we queue up the new found contact to the algorithm
 		foundCloser := false
 		for _, c := range receivedContacts {
 			isCloser := sorterClosestContacts.InsertContact(*c)
 			if isCloser {
 				foundCloser = true
 				contactIn <- *c
-			} else {
-				break
 			}
 		}
+
 		if !foundCloser {
-			// If we did not, we should stop searching
-			// We send a empty contact to kill a worker
-			contactIn <- model.Contact{}
+			// If we did not found any new contact, we decrement the number of workers
 			numWorkers--
 		}
 	}

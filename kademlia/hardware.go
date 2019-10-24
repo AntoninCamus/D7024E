@@ -1,11 +1,13 @@
 package kademlia
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/LHJ/D7024E/kademlia/model"
 	"log"
 	"net"
 	"os"
+	"sort"
 )
 
 func getHostname() (hostname string, err error) {
@@ -18,6 +20,8 @@ func getAddress() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	validIP := make([]net.IP, 0)
 	for _, i := range ifaces {
 		addrs, err2 := i.Addrs()
 		if err2 != nil {
@@ -25,17 +29,28 @@ func getAddress() (string, error) {
 		}
 		for _, addr := range addrs {
 			var ip net.IP
+
 			switch v := addr.(type) {
 			case *net.IPNet:
 				ip = v.IP
 			case *net.IPAddr:
 				ip = v.IP
 			}
+
 			if ip != nil && ip.IsGlobalUnicast() && ip.To4() != nil {
-				return ip.To4().String(), nil
+				validIP = append(validIP, ip.To4())
 			}
 		}
 	}
+
+	if len(validIP) > 0 {
+		sort.Slice(validIP, func(i, j int) bool {
+			return bytes.Compare(validIP[i], validIP[j]) < 0
+		})
+
+		return validIP[0].String(),nil
+	}
+	
 	return "", err
 }
 
