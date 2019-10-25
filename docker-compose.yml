@@ -18,6 +18,8 @@ services:
     image: kademlia
     ports:
       - "8081:8080"
+    depends_on:
+      - "entry_node"
     deploy:
       replicas: 50
       resources:

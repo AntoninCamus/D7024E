@@ -140,7 +140,7 @@ func (s *internalAPIServer) StoreDataCall(_ context.Context, in *pb.StoreDataReq
 	if err != nil {
 		return &pb.StoreDataAnswer{Ok: false}, nil
 	}
-	log.Printf("GRPC : Storing data %s", srcContact.String())
+	log.Printf("GRPC : Data '%s' stored", in.Data)
 	return &pb.StoreDataAnswer{Ok: true}, nil
 }
 
