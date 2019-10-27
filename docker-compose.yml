@@ -2,8 +2,6 @@ version: "3.3"
 services:
   entry_node:
     image: kademlia
-    ports:
-      - "8080:8080"
     deploy:
       replicas: 1
       resources:
@@ -17,7 +15,7 @@ services:
   nodes:
     image: kademlia
     ports:
-      - "8081:8080"
+      - "8080:8080"
     depends_on:
       - "entry_node"
     deploy:
