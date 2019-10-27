@@ -1,6 +1,7 @@
 package kademlia
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/LHJ/D7024E/kademlia/model"
@@ -8,96 +9,136 @@ import (
 )
 
 func Test_Ping(t *testing.T) {
-	tk := model.NewKademliaNetwork(model.Contact{
+	network := model.NewKademliaNetwork(model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	})
-	s := StartGrpcServer(tk)
 
-	me := model.Contact{
+	s := StartGrpcServer(network)
+	source := model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	}
 
-	// Send a normal ping that should work
-	p_normal := sendPingMessage(&me, false)
-	assert.Assert(t, p_normal)
+	// Should work
+	answerValid := sendPingMessage(&source, false)
+	assert.Assert(t, answerValid)
 	s.GracefulStop()
 
-	// Send a ping on a offline node
-	p_offline := sendPingMessage(&me, false)
-	assert.Assert(t, !p_offline)
+	// Should timeout
+	s.GracefulStop()
+	answerTimout := sendPingMessage(&source, false)
+	assert.Assert(t, !answerTimout)
 }
 
 func Test_FindContact(t *testing.T) {
-	tk := model.NewKademliaNetwork(model.Contact{
+	net := model.NewKademliaNetwork(model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	})
-	s := StartGrpcServer(tk)
+	s := StartGrpcServer(net)
 
-	me := model.Contact{
+	source := model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	}
+	target := net.GetIdentity()
 
-	_, err := sendFindContactMessage(&me, &me, model.NewRandomKademliaID(), 0)
+	// Should work
+	contacts, err := sendFindContactMessage(
+		&target,
+		&source,
+		model.NewRandomKademliaID(),
+		5,
+	)
 	assert.NilError(t, err)
+	assert.Equal(t, contacts[0].ID.String(), source.ID.String())
 
+	// Should fail if no address
+	invalidTarget := model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "",
+	}
+	_, err = sendFindContactMessage(&invalidTarget, &source, model.NewRandomKademliaID(), 5)
+	assert.Error(t, err, fmt.Sprintf("target is invalid %s", invalidTarget.String()))
+
+	// Should timeout
 	s.GracefulStop()
-
-	_, err = sendFindContactMessage(&me, &me, model.NewRandomKademliaID(), 0)
+	_, err = sendFindContactMessage(&target, &target, model.NewRandomKademliaID(), 5)
 	assert.Error(t, err, "context deadline exceeded")
 }
 
 func Test_StoreDataCall(t *testing.T) {
-	tk := model.NewKademliaNetwork(model.Contact{
+	net := model.NewKademliaNetwork(model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	})
-	s := StartGrpcServer(tk)
+	s := StartGrpcServer(net)
 
-	me := model.Contact{
+	source := model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	}
+	target := net.GetIdentity()
 
-	err := sendStoreMessage(&me, &me, []byte("TEST1"))
+	// Should work
+	err := sendStoreMessage(&target, &source, []byte("TEST1"))
 	assert.NilError(t, err)
 
-	s.GracefulStop()
+	// Should fail if no address
+	invalidTarget := model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "",
+	}
+	err = sendStoreMessage(&invalidTarget, &source, []byte("TEST1"))
+	assert.Error(t, err, fmt.Sprintf("target is invalid %s", invalidTarget.String()))
 
-	err = sendStoreMessage(&me, &me, []byte("TEST2"))
+	// Should timeout
+	s.GracefulStop()
+	err = sendStoreMessage(&target, &source, []byte("TEST2"))
 	assert.Error(t, err, "context deadline exceeded")
 }
 
 func Test_FindDataCall(t *testing.T) {
-	tk := model.NewKademliaNetwork(model.Contact{
+	net := model.NewKademliaNetwork(model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	})
-	s := StartGrpcServer(tk)
+	s := StartGrpcServer(net)
 
-	me := tk.GetIdentity()
-	other := model.Contact{
+	source := model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	}
+	target := net.GetIdentity()
 
 	data := []byte("TEST")
 	id := model.NewKademliaID(data)
 
-	err := sendStoreMessage(&me, &other, data)
+	// Should work
+	err := sendStoreMessage(&target, &source, data)
 	assert.NilError(t, err)
 
-	dataReceived, _, err := sendFindDataMessage(&me, &other, id, 1)
+	dataReceived, contacts, err := sendFindDataMessage(&target, &source, id, 1)
 	assert.NilError(t, err)
 	assert.Equal(t, string(dataReceived), string(data))
+	assert.Equal(t, len(contacts), 0)
 
-	dataReceived, contacts, err := sendFindDataMessage(&me, &other, model.NewRandomKademliaID(), 1)
+	dataReceived, contacts, err = sendFindDataMessage(&target, &source, model.NewRandomKademliaID(), 1)
 	assert.NilError(t, err)
 	assert.Equal(t, len(dataReceived), 0)
-	assert.Equal(t, len(contacts), 1)
-	assert.Equal(t, contacts[0].ID.String(), other.ID.String())
+	assert.Equal(t, contacts[0].ID.String(), source.ID.String())
+
+	// Should fail if no address
+	invalidTarget := model.Contact{
+		ID:      model.NewRandomKademliaID(),
+		Address: "",
+	}
+	_, _, err = sendFindDataMessage(&invalidTarget, &source, id, 1)
+	assert.Error(t, err, fmt.Sprintf("target is invalid %s", invalidTarget.String()))
+
+	// Should timeout
 	s.GracefulStop()
+	_, _, err = sendFindDataMessage(&target, &source, id, 1)
+	assert.Error(t, err, "context deadline exceeded")
 }

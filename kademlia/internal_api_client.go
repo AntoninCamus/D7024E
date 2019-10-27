@@ -32,7 +32,6 @@ func sendPingMessage(target *model.Contact, registerMe bool) bool {
 	// Open gRPC connection
 	client, conn, err := connect(target.Address)
 	if err != nil {
-		//log.Print(err)
 		return false
 	}
 	defer func() {
@@ -49,7 +48,6 @@ func sendPingMessage(target *model.Contact, registerMe bool) bool {
 		},
 	)
 	if err != nil {
-		//log.Print(err)
 		return false
 	}
 
@@ -57,7 +55,11 @@ func sendPingMessage(target *model.Contact, registerMe bool) bool {
 }
 
 // sendFindContactMessage ask to the provided node for the nbNeighbors closest neighbors of the searchedContactID provided, and returns them.
-func sendFindContactMessage(target *model.Contact, me *model.Contact, searchedContactID *model.KademliaID, nbNeighbors int) (contacts []*model.Contact, err error) {
+func sendFindContactMessage(target *model.Contact, source *model.Contact, searchedContactID *model.KademliaID, nbNeighbors int) (contacts []*model.Contact, err error) {
+	if target.Address == "" {
+		return nil, fmt.Errorf("target is invalid %s", target.String())
+	}
+
 	// Open gRPC connection
 	client, conn, err := connect(target.Address)
 	if err != nil {
@@ -73,8 +75,8 @@ func sendFindContactMessage(target *model.Contact, me *model.Contact, searchedCo
 		context.Background(),
 		&pb.FindContactRequest{
 			Src: &pb.Contact{
-				ID:      me.ID[:],
-				Address: me.Address,
+				ID:      source.ID[:],
+				Address: source.Address,
 			},
 			SearchedContactId: searchedContactID[:],
 			NbNeighbors:       int32(nbNeighbors),
@@ -104,6 +106,10 @@ func sendFindContactMessage(target *model.Contact, me *model.Contact, searchedCo
 // sendFindDataMessage ask to the provided node for the file identified by the provided fileID, and returns it.
 // If data was not found it act as SendFindContactMessage.
 func sendFindDataMessage(target *model.Contact, me *model.Contact, searchedFileID *model.KademliaID, nbNeighbors int) ([]byte, []*model.Contact, error) {
+	if target.Address == "" {
+		return nil, nil, fmt.Errorf("target is invalid %s", target.String())
+	}
+
 	// Open gRPC connection
 	client, conn, err := connect(target.Address)
 	if err != nil {
@@ -164,7 +170,7 @@ func sendStoreMessage(target *model.Contact, me *model.Contact, data []byte) err
 
 	client, conn, err := connect(target.Address)
 	if err != nil {
-		log.Print("Unable to connect to", target.Address)
+		log.Print("GRPC CLI : unable to connect to", target.Address)
 		return err
 	}
 	defer func() {
