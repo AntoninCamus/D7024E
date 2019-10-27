@@ -36,7 +36,8 @@ func TestContactSorter_InsertContact_ReturnsFalseWhenAlreadyPresent(t *testing.T
 
 func TestContactSorter_InsertContact_InsertOnlyCloserValues(t *testing.T) {
 	targetID := NewRandomKademliaID()
-	s := NewSorter(*targetID, 5)
+	sorterSize := 5
+	s := NewSorter(*targetID, sorterSize)
 
 	for i := 0; i < 100; i++ {
 		addedID := NewRandomKademliaID()
@@ -45,16 +46,19 @@ func TestContactSorter_InsertContact_InsertOnlyCloserValues(t *testing.T) {
 		// Let's compute the expected result :
 		added := newContact(addedID, "")
 		added.CalcDistance(targetID)
-		expectedResult := false
+		expectedResult := len(contactsBefore) < sorterSize
 		for _, c := range contactsBefore {
-			if c.ID != nil {
+			if expectedResult {
+				break
+			} else {
 				c.CalcDistance(targetID)
-			}
-			if c.ID == added.ID {
-				break
-			} else if c.ID == nil || added.Less(&c) {
-				expectedResult = true
-				break
+				if added.ID.equals(c.ID) {
+					expectedResult = false
+					break
+				} else if added.Less(&c) {
+					expectedResult = true
+					break
+				}
 			}
 		}
 
@@ -62,21 +66,14 @@ func TestContactSorter_InsertContact_InsertOnlyCloserValues(t *testing.T) {
 		assert.Equal(t, s.InsertContact(newContact(addedID, "")), expectedResult)
 		if expectedResult == true {
 			// Expected replaced contact position
-			expectedPosition := -1
-
-			for j, c := range contactsBefore {
-				if c.ID == nil {
-					expectedPosition = j
+			found := false
+			for _, c := range s.GetContacts() {
+				if c.ID.equals(addedID) {
+					found = true
 					break
-				} else {
-					if expectedPosition == -1 && added.Less(&c) {
-						expectedPosition = j
-					} else if expectedPosition != -1 && contactsBefore[expectedPosition].Less(&c) {
-						expectedPosition = j
-					}
 				}
 			}
-			assert.Assert(t, s.GetContacts()[expectedPosition].ID.equals(added.ID))
+			assert.Assert(t, found)
 		}
 	}
 }

@@ -43,11 +43,11 @@ func StartRestServer(k *model.KademliaNetwork, s chan os.Signal) *http.Server {
 	return &srv
 }
 
-type storeAnswer struct {
+type StoreAnswer struct {
 	FileID string
 }
 
-type findAnswer struct {
+type FindAnswer struct {
 	Data string
 }
 
@@ -60,7 +60,7 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 			log.Printf("API error on POST during store : %s", err.Error())
 			return
 		}
-		jsonAnswer, err = json.Marshal(storeAnswer{FileID: fileID})
+		jsonAnswer, err = json.Marshal(StoreAnswer{FileID: fileID})
 		if err != nil {
 			log.Printf("API error on POST during marshal : %s", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -72,7 +72,7 @@ func (s *restService) findstore(w http.ResponseWriter, r *http.Request) {
 			log.Printf("API error on GET during find : %s", err.Error())
 			return
 		}
-		jsonAnswer, err = json.Marshal(findAnswer{Data: data})
+		jsonAnswer, err = json.Marshal(FindAnswer{Data: data})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

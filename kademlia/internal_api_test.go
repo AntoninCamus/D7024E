@@ -27,7 +27,6 @@ func Test_Ping(t *testing.T) {
 	// Send a ping on a offline node
 	p_offline := sendPingMessage(&me, false)
 	assert.Assert(t, !p_offline)
-
 }
 
 func Test_FindContact(t *testing.T) {

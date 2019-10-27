@@ -1,46 +1,106 @@
 package kademlia
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"github.com/LHJ/D7024E/kademlia/model"
 	"gotest.tools/assert"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"testing"
-
-	"github.com/LHJ/D7024E/kademlia/model"
-	"os/exec"
 )
 
-func Test_userAPI(t *testing.T) {
-	tk := model.NewKademliaNetwork(model.Contact{
+func TestUserApi(t *testing.T) {
+	testTable := []func(t *testing.T, net *model.KademliaNetwork, sigChan chan os.Signal){findFile, postFile, exitNode}
+
+	net := model.NewKademliaNetwork(model.Contact{
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	})
 	sigChan := make(chan os.Signal, 1)
 
-	StartGrpcServer(tk)
-	StartRestServer(tk, sigChan)
+	g := StartGrpcServer(net)
+	h := StartRestServer(net, sigChan)
 
-	// Store
-	cmd := exec.Command("../client.py", "store", "--file=TEST", "localhost:8080")
-	stdOut, _ := cmd.CombinedOutput()
+	for _, test := range testTable {
+		test(t, net, sigChan)
+	}
 
-	assert.Equal(t, string(stdOut)[11:23], "Status:  200")
+	g.GracefulStop()
+	h.Close()
+}
 
-	// Find
-	id := model.NewKademliaID([]byte("TEST"))
-	cmd = exec.Command("../client.py", "find", "--id="+id.String(), "localhost:8080")
-	stdOut, _ = cmd.CombinedOutput()
+func postFile(t *testing.T, net *model.KademliaNetwork, sigChan chan os.Signal) {
 
-	assert.Equal(t, string(stdOut)[11:23], "Status:  200")
+	fileToStore := "123"
 
-	id = model.NewKademliaID([]byte("MISSING FILE"))
-	cmd = exec.Command("../client.py", "find", "--id="+id.String(), "localhost:8080")
-	stdOut, _ = cmd.CombinedOutput()
+	response, err := http.Post(
+		"http://localhost:8080/kademlia/file",
+		"application/raw",
+		bytes.NewBufferString(fileToStore),
+	)
+	assert.NilError(t, err)
+	assert.Equal(t, response.StatusCode, 200)
 
-	assert.Equal(t, string(stdOut)[11:23], "Status:  404")
+	data, err := ioutil.ReadAll(response.Body)
+	assert.NilError(t, err)
 
-	// Exit
-	cmd = exec.Command("../client.py", "exit", "localhost:8080")
-	stdOut, _ = cmd.CombinedOutput()
+	var answer StoreAnswer
+	err = json.Unmarshal(data, &answer)
+	assert.NilError(t, err)
 
-	assert.Equal(t, string(stdOut)[11:23], "Status:  200")
+	//answer.FileID should be a valid KademliaID
+	assert.Equal(t, len(answer.FileID), len(model.NewRandomKademliaID().String()))
+	id := model.KademliaIDFromString(answer.FileID)
+
+	//file should be in the storage
+	data, found := net.GetData(id)
+	assert.Assert(t, found)
+	assert.Equal(t, string(data), fileToStore)
+}
+
+func findFile(t *testing.T, net *model.KademliaNetwork, sigChan chan os.Signal) {
+	fileToFind := "123"
+	idToFind := model.NewRandomKademliaID()
+	err := net.SaveData(idToFind, []byte(fileToFind))
+	assert.NilError(t, err)
+
+	// Find an existing file should return 200 and no error
+	response, err := http.Get(fmt.Sprintf(
+		"http://localhost:8080/kademlia/file?id=%s",
+		idToFind.String(),
+	))
+	assert.NilError(t, err)
+	assert.Equal(t, response.StatusCode, 200)
+
+	// Then the answer should be equal to the ID inserted
+	data, err := ioutil.ReadAll(response.Body)
+	assert.NilError(t, err)
+	var answer FindAnswer
+	err = json.Unmarshal(data, &answer)
+	assert.NilError(t, err)
+	assert.Equal(t, answer.Data, fileToFind)
+
+	// Finally seaching for a non existing one should return a 404
+	response, err = http.Get(fmt.Sprintf(
+		"http://localhost:8080/kademlia/file?id=%s",
+		model.NewRandomKademliaID().String(),
+	))
+	assert.NilError(t, err)
+	assert.Equal(t, response.StatusCode, 404)
+
+}
+
+func exitNode(t *testing.T, net *model.KademliaNetwork, sigChan chan os.Signal) {
+	// Channel should be empty before calling exit
+	assert.Equal(t, len(sigChan), 0)
+
+	response, err := http.Get("http://localhost:8080/node/exit")
+	assert.NilError(t, err)
+	assert.Equal(t, response.StatusCode, 200)
+
+	// Channel should contain one value after calling exit
+	assert.Equal(t, len(sigChan), 1)
 }

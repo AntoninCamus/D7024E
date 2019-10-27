@@ -2,7 +2,6 @@ package model
 
 import (
 	"container/list"
-	"fmt"
 )
 
 // contactBucket definition
@@ -68,14 +67,4 @@ func (bucket *contactBucket) getContactAndCalcDistance(target *KademliaID) []Con
 // len return the maxSize of the contactBucket
 func (bucket *contactBucket) len() int {
 	return bucket.list.Len()
-}
-
-func (bucket *contactBucket) string() interface{} {
-	var ret = "["
-	for e := bucket.list.Back(); e != nil; e = e.Prev() {
-		c := e.Value.(Contact)
-		ret += fmt.Sprintf("%s,", c.String())
-	}
-	ret += "]"
-	return ret
 }
