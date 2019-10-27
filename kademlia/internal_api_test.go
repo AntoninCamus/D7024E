@@ -76,7 +76,7 @@ func Test_FindDataCall(t *testing.T) {
 		ID:      model.NewRandomKademliaID(),
 		Address: "127.0.0.1",
 	})
-	StartGrpcServer(tk)
+	s := StartGrpcServer(tk)
 
 	me := tk.GetIdentity()
 	other := model.Contact{
@@ -99,4 +99,5 @@ func Test_FindDataCall(t *testing.T) {
 	assert.Equal(t, len(dataReceived), 0)
 	assert.Equal(t, len(contacts), 1)
 	assert.Equal(t, contacts[0].ID.String(), other.ID.String())
+	s.GracefulStop()
 }
