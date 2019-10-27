@@ -45,7 +45,6 @@ func (bucket *contactBucket) removeContact(contact Contact) {
 
 		if (contact).ID.equals(nodeID) {
 			bucket.list.Remove(e)
-			return
 		}
 	}
 }

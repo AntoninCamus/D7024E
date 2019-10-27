@@ -3,6 +3,7 @@ package kademlia
 import (
 	"encoding/json"
 	"github.com/LHJ/D7024E/kademlia/model"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -105,7 +106,7 @@ func find(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwork
 	kademliaID := model.KademliaIDFromString(id)
 	file, err := lookupData(network, kademliaID)
 	if err != nil {
-		http.Error(w, "Error while retrieving file", http.StatusNotFound)
+		http.Error(w, "error while retrieving file", http.StatusNotFound)
 		return "", err
 	}
 	return string(file), nil
@@ -114,9 +115,9 @@ func find(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwork
 func store(w http.ResponseWriter, r *http.Request, network *model.KademliaNetwork) (string, error) {
 	// Read input
 	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	if len(body) == 0 || err != nil {
 		http.Error(w, "error reading request body", http.StatusBadRequest)
-		return "", nil
+		return "", errors.Wrap(err, "error reading request body")
 	}
 	// Store file
 	file := []byte(string(body))

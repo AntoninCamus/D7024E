@@ -69,7 +69,9 @@ func TestKademlia_RegisterAndGetContact(t *testing.T) {
 	assert.Assert(t, contains(contacts, c2))
 
 	net.UnregisterContact(c1)
-	assert.Assert(t, !contains(contacts, c1))
 	net.UnregisterContact(c2)
+
+	contacts = net.GetContacts(me.ID, 10)
+	assert.Assert(t, !contains(contacts, c1))
 	assert.Assert(t, !contains(contacts, c2))
 }
