@@ -57,12 +57,12 @@ func lookupContact(net *model.KademliaNetwork, target *model.KademliaID, askedNb
 	numWorkers := 0
 
 	// Create workers
-	for i := 0; i < parallelism; i++ {
+	for i := 0; i < parallelism && i < len(localClosestContacts); i++ {
 		go run(contactIn, contactOut)
 		numWorkers++
 	}
 
-	// Fill the
+	// Fill the channel
 	for _, c := range localClosestContacts {
 		c.CalcDistance(target)
 		contactIn <- c
@@ -143,14 +143,20 @@ func lookupData(net *model.KademliaNetwork, fileID *model.KademliaID) ([]byte, e
 		}
 	}
 
-	// Create workers with each of the local found closest contacts
+	numWorkers := 0
+
+	// Create workers
+	for i := 0; i < parallelism && i < len(localClosestContacts); i++ {
+		go run(contactIn, contactOut, dataOut)
+		numWorkers++
+	}
+
+	// Fill the channel
 	for _, c := range localClosestContacts {
 		c.CalcDistance(fileID)
 		contactIn <- c
-		go run(contactIn, contactOut, dataOut)
 	}
 
-	numWorkers := len(localClosestContacts)
 	for numWorkers > 0 {
 		select {
 		case receivedData := <-dataOut:

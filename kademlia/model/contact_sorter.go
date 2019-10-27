@@ -53,7 +53,11 @@ func (s *contactSorter) InsertContact(contactToInsert Contact) bool {
 
 // GetContacts return the full internal state of the sorter.
 func (s *contactSorter) GetContacts() []Contact {
-	newList := make([]Contact, len(s.contacts))
-	copy(newList, s.contacts)
+	newList := make([]Contact, 0)
+	for _, c := range s.contacts {
+		if c.ID != nil {
+			newList = append(newList, c)
+		}
+	}
 	return newList
 }
